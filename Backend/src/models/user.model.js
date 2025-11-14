@@ -19,9 +19,16 @@ const userSchema = new mongoose.Schema({
         enum: ['user', 'admin'],
         default: 'user'
     },
+    adminRequest: {
+        type: String,
+        enum: ["none", "pending", "approved", "rejected"],
+        default: "none",
+    },
+
+    refreshToken: { type: String }
 },
 {
     timestamps: true
 });
 
-export const User = mongoose.model('User', userScehma);
+export const User = mongoose.model('User', userSchema);
