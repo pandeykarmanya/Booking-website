@@ -184,7 +184,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 /* ------------------------------------------------------------------
    Register Admin
 -------------------------------------------------------------------*/
-export const registerAdmin = async (req, res) => {
+const registerAdmin = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
@@ -205,6 +205,8 @@ export const registerAdmin = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
 /* ------------------------------------------------------------------
    EXPORTS
 -------------------------------------------------------------------*/
@@ -217,5 +219,6 @@ export {
     refreshAccessToken,
     changeCurrentPassword,
     getCurrentUser,
-    updateAccountDetails
+    updateAccountDetails,
+    registerAdmin
 };

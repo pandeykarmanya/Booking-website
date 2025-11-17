@@ -6,7 +6,7 @@ import { User } from "../models/user.model.js";
 /* ------------------------------------------------------------------
    Get Current Logged-In User
 -------------------------------------------------------------------*/
-export const getCurrentUser = asyncHandler(async (req, res) => {
+const getCurrentUser = asyncHandler(async (req, res) => {
     return res.status(200).json(
         new ApiResponse(200, req.user, "User fetched successfully")
     );
@@ -15,7 +15,7 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
 /* ------------------------------------------------------------------
    Update User Name Only
 -------------------------------------------------------------------*/
-export const updateName = asyncHandler(async (req, res) => {
+const updateName = asyncHandler(async (req, res) => {
     const { name } = req.body;
 
     if (!name) {
@@ -36,7 +36,7 @@ export const updateName = asyncHandler(async (req, res) => {
 /* ------------------------------------------------------------------
    Change Password
 -------------------------------------------------------------------*/
-export const changePassword = asyncHandler(async (req, res) => {
+const changePassword = asyncHandler(async (req, res) => {
     const { oldPassword, newPassword } = req.body;
 
     if (!oldPassword || !newPassword) {
@@ -59,7 +59,7 @@ export const changePassword = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, {}, "Password changed successfully"));
 });
 
-export const requestAdminRole = asyncHandler(async (req, res) => {
+const requestAdminRole = asyncHandler(async (req, res) => {
     const userId = req.user._id;
 
     const user = await User.findById(userId);
@@ -79,3 +79,10 @@ export const requestAdminRole = asyncHandler(async (req, res) => {
         new ApiResponse(200, "Admin role request submitted")
     );
 });
+
+export {
+    getCurrentUser,
+    updateName,
+    changePassword,
+    requestAdminRole
+};
