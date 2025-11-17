@@ -13,7 +13,7 @@ export const authMiddleware = (req, res, next) => {
       return res.status(401).json({ message: "Invalid Authorization header format. Use: Bearer <token>" });
 
     const token = parts[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
     req.user = decoded; // Attach user info (id, role, etc.)
     next();
