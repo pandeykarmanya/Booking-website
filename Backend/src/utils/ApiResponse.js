@@ -1,5 +1,5 @@
 class ApiResponse {
-    constrcutor(
+    constructor(
         statusCode, 
         message = "Request successful",
         data = "success",
