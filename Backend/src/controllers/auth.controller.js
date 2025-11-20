@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 
 /* ------------------------------------------------------------------
    Generate Access + Refresh Tokens
@@ -34,6 +35,9 @@ const registerUser = asyncHandler(async (req, res) => {
     if (existedUser) {
         throw new ApiError(409, "Email already taken");
     }
+
+     // ⭐ HASH THE PASSWORD
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
         name,
@@ -74,6 +78,17 @@ const loginUser = asyncHandler(async (req, res) => {
         "-password -refreshToken"
     );
 
+    //  SET COOKIES HERE
+    const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",  
+        sameSite: "none",
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    };
+
+    res.cookie("accessToken", accessToken, cookieOptions);
+    res.cookie("refreshToken", refreshToken, cookieOptions);
+
     return res.status(200).json(
         new ApiResponse(200, {
             user: loggedInUser,
@@ -93,6 +108,15 @@ const logoutUser = asyncHandler(async (req, res) => {
         { new: true }
     );
 
+    const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "none"
+    };
+
+    res.clearCookie("accessToken", cookieOptions);
+    res.clearCookie("refreshToken", cookieOptions);
+
     return res.status(200).json(
         new ApiResponse(200, {}, "Logged out successfully")
     );
@@ -103,7 +127,7 @@ const logoutUser = asyncHandler(async (req, res) => {
 -------------------------------------------------------------------*/
 const refreshAccessToken = asyncHandler(async (req, res) => {
     const incomingRefreshToken =
-        req.body.refreshToken || req.cookies.refreshToken;
+        req.cookies.refreshToken || req.body.refreshToken;
 
     if (!incomingRefreshToken) {
         throw new ApiError(401, "Unauthorized");
@@ -127,10 +151,21 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     const { accessToken, refreshToken } =
         await generateAccessAndRefreshTokens(user._id);
 
+    const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "none",
+        maxAge: 7 * 24 * 60 * 60 * 1000
+    };
+
+    res.cookie("accessToken", accessToken, cookieOptions);
+    res.cookie("refreshToken", refreshToken, cookieOptions);
+
     return res.status(200).json(
         new ApiResponse(200, { accessToken, refreshToken }, "Token refreshed")
     );
 });
+
 
 /* ------------------------------------------------------------------
    CHANGE PASSWORD

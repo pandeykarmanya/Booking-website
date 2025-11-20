@@ -4,7 +4,7 @@ import { createBooking, cancelBooking, getAllBookings, getMyBookings } from "../
 
 const router = express.Router();
 
-router.post("/book", authMiddleware, createBooking);
+router.post("/", authMiddleware, createBooking);
 router.get("/my-bookings", authMiddleware, getMyBookings);
 
 router.delete("/cancel/:bookingId", authMiddleware, cancelBooking);

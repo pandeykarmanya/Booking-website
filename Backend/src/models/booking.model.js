@@ -7,7 +7,7 @@ const bookingSchema = new mongoose.Schema({
         required: true
     },
     venue: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: String,
         ref: 'Venue',
         required: true
     },
@@ -25,8 +25,8 @@ const bookingSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['pending', 'confirmed', 'cancelled'],
-        default: 'pending'
+        enum: ['confirmed', 'cancelled'],
+        default: 'confirmed'
     },
 },
 {
