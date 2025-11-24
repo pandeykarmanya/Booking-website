@@ -1,13 +1,37 @@
-import { useState, useEffect } from "react";
-import { Users, Calendar, Shield, XCircle } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Users, Menu, X, Calendar, Shield, XCircle, User } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { logoutUser } from "../api/auth";
+
 
 export default function AdminDashboard() {
+
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const navigate = useNavigate();
+
   const [activeTab, setActiveTab] = useState("bookings");
   const [bookings, setBookings] = useState([]);
   const [users, setUsers] = useState([]);
-  const [stats, setStats] = useState({ totalBookings: 0, activeUsers: 0, admins: 0 });
+  const [stats, setStats] = useState({
+    totalBookings: 0,
+    activeUsers: 0,
+    admins: 0,
+  });
 
-  // Fetch data from backend (replace URLs with your endpoints)
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Fetch data
   useEffect(() => {
     if (activeTab === "bookings") fetchBookings();
     if (activeTab === "users") fetchUsers();
@@ -68,23 +92,129 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      navigate("/");
+    } catch (err) {
+      console.log("Logout error:", err);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-24">
       {/* Navbar */}
-      <nav className="bg-gradient-to-r from-[#780218]/80 to-[#9a031e]/70 backdrop-blur-md text-white shadow-md px-8 py-4 flex justify-between items-center">
-        <h1 className="text-2xl font-semibold">Admin Dashboard</h1>
-        <div className="flex space-x-6">
-          {["bookings", "users", "stats"].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`hover:text-gray-200 capitalize ${
-                activeTab === tab ? "font-bold underline" : ""
-              }`}
+      <nav className="fixed top-0 left-0 w-full bg-transparent z-50">
+        <div className="max-w-6xl mx-auto px-6 py-3">
+          <div className="bg-linear-to-r from-[rgba(120,2,24,0.6)] to-[rgba(154,3,30,0.5)] backdrop-blur-md rounded-full shadow-md flex justify-between items-center px-6 py-3 text-white">
+            {/* Logo */}
+            <Link
+              to="/"
+              className="text-2xl font-bold hover:opacity-90 transition-opacity"
             >
-              {tab}
-            </button>
-          ))}
+              Booking
+            </Link>
+
+            {/* Desktop Nav */}
+            <ul className="hidden md:flex space-x-6 font-medium">
+              <li>
+                <button
+                  onClick={() => setActiveTab("bookings")}
+                  className={`hover:text-gray-200 ${
+                    activeTab === "bookings" ? "underline font-semibold" : ""
+                  }`}
+                >
+                  Bookings
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => setActiveTab("users")}
+                  className={`hover:text-gray-200 ${
+                    activeTab === "users" ? "underline font-semibold" : ""
+                  }`}
+                >
+                  Users
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => setActiveTab("stats")}
+                  className={`hover:text-gray-200 ${
+                    activeTab === "stats" ? "underline font-semibold" : ""
+                  }`}
+                >
+                  Stats
+                </button>
+              </li>
+            </ul>
+
+            {/* Right Side */}
+            <div className="flex items-center gap-3">
+              {/* Profile */}
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-full transition"
+                >
+                  <User className="w-5 h-5" />
+                  <span className="hidden sm:inline">Admin</span>
+                </button>
+
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-xl shadow-lg p-2">
+                    <button
+                      className="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-100"
+                      onClick={handleLogout}
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="md:hidden bg-white/10 hover:bg-white/20 p-2 rounded-full transition"
+              >
+                {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile Menu */}
+          {menuOpen && (
+            <div className="md:hidden mt-3 bg-[rgba(154,3,30,0.3)] backdrop-blur-md rounded-2xl text-white shadow-lg py-4 space-y-3 text-center">
+              <button
+                onClick={() => {
+                  setActiveTab("bookings");
+                  setMenuOpen(false);
+                }}
+                className="block hover:text-gray-200"
+              >
+                Bookings
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab("users");
+                  setMenuOpen(false);
+                }}
+                className="block hover:text-gray-200"
+              >
+                Users
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab("stats");
+                  setMenuOpen(false);
+                }}
+                className="block hover:text-gray-200"
+              >
+                Stats
+              </button>
+            </div>
+          )}
         </div>
       </nav>
 
@@ -96,6 +226,7 @@ export default function AdminDashboard() {
               <Calendar className="w-5 h-5 text-[#9a031e]" />
               All Bookings
             </h2>
+
             <div className="bg-white shadow rounded-lg p-4 space-y-3">
               {bookings.length === 0 ? (
                 <p className="text-gray-500 text-center">No bookings found.</p>
@@ -133,6 +264,7 @@ export default function AdminDashboard() {
               <Users className="w-5 h-5 text-[#9a031e]" />
               Manage Users
             </h2>
+
             <div className="bg-white shadow rounded-lg p-4 space-y-3">
               {users.length === 0 ? (
                 <p className="text-gray-500 text-center">No users found.</p>
@@ -148,6 +280,7 @@ export default function AdminDashboard() {
                         Department: {user.department} | Role: {user.role}
                       </p>
                     </div>
+
                     {user.role !== "admin" && (
                       <button
                         className="flex items-center gap-1 text-green-700 hover:text-green-900 transition"
@@ -169,6 +302,7 @@ export default function AdminDashboard() {
             <h2 className="text-xl font-semibold text-gray-800 mb-4">
               Dashboard Overview
             </h2>
+
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               <div className="bg-white rounded-xl shadow-md p-6 text-center">
                 <p className="text-2xl font-bold text-[#9a031e]">
@@ -176,12 +310,14 @@ export default function AdminDashboard() {
                 </p>
                 <p className="text-gray-600">Total Bookings</p>
               </div>
+
               <div className="bg-white rounded-xl shadow-md p-6 text-center">
                 <p className="text-2xl font-bold text-[#9a031e]">
                   {stats.activeUsers}
                 </p>
                 <p className="text-gray-600">Active Users</p>
               </div>
+
               <div className="bg-white rounded-xl shadow-md p-6 text-center">
                 <p className="text-2xl font-bold text-[#9a031e]">
                   {stats.admins}
