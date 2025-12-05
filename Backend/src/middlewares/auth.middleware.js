@@ -4,17 +4,28 @@ import jwt from "jsonwebtoken";
 // Auth middleware (already defined)
 export const authMiddleware = (req, res, next) => {
   try {
+    // ✅ Check both Authorization header AND cookies
+    let token;
+    
+    // First check Authorization header
     const authHeader = req.headers.authorization;
-    if (!authHeader)
-      return res.status(401).json({ message: "No Authorization header provided" });
+    if (authHeader) {
+      const parts = authHeader.split(" ");
+      if (parts.length === 2 && parts[0] === "Bearer") {
+        token = parts[1];
+      }
+    }
+    
+    // If no header token, check cookies
+    if (!token) {
+      token = req.cookies?.accessToken;
+    }
+    
+    if (!token) {
+      return res.status(401).json({ message: "No token provided" });
+    }
 
-    const parts = authHeader.split(" ");
-    if (parts.length !== 2 || parts[0] !== "Bearer")
-      return res.status(401).json({ message: "Invalid Authorization header format. Use: Bearer <token>" });
-
-    const token = parts[1];
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-
     req.user = decoded; // Attach user info (id, role, etc.)
     next();
   } catch (err) {

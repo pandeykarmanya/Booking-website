@@ -24,31 +24,40 @@ const generateAccessAndRefreshTokens = async (userId) => {
    REGISTER USER  — (name, email, password)
 -------------------------------------------------------------------*/
 const registerUser = asyncHandler(async (req, res) => {
+    console.log("REGISTER HIT:", req.body);
     const { name, email, password } = req.body;
 
+    // Validate all fields are provided
     if (!name || !email || !password) {
         throw new ApiError(400, "All fields are required");
     }
 
-    const existedUser = await User.findOne({ email });
+    // Check if user already exists (case-insensitive email check)
+    const existedUser = await User.findOne({ 
+        email: email.toLowerCase() 
+    });
 
     if (existedUser) {
         throw new ApiError(409, "Email already taken");
     }
 
-     // ⭐ HASH THE PASSWORD
-    const hashedPassword = await bcrypt.hash(password, 10);
-
+    // Create new user (password will be automatically hashed by pre-save hook)
     const user = await User.create({
         name,
         email: email.toLowerCase(),
-        password
+        password // Plain password - model's pre-save hook will hash it
     });
 
+    // Get created user without sensitive fields
     const createdUser = await User.findById(user._id).select(
         "-password -refreshToken"
     );
 
+    if (!createdUser) {
+        throw new ApiError(500, "Something went wrong while registering user");
+    }
+
+    // Return success response
     return res.status(201).json(
         new ApiResponse(201, createdUser, "User registered successfully")
     );
@@ -78,12 +87,15 @@ const loginUser = asyncHandler(async (req, res) => {
         "-password -refreshToken"
     );
 
-    //  SET COOKIES HERE
+    // ✅ FIXED COOKIE OPTIONS FOR DEVELOPMENT
+    const isProduction = process.env.NODE_ENV === "production";
+    
     const cookieOptions = {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",  
-        sameSite: "none",
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        secure: isProduction, // true in production, false in development
+        sameSite: isProduction ? "none" : "lax", // ✅ Use "lax" for development
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        path: "/" // ✅ Make cookie available to all paths
     };
 
     res.cookie("accessToken", accessToken, cookieOptions);
@@ -108,10 +120,14 @@ const logoutUser = asyncHandler(async (req, res) => {
         { new: true }
     );
 
+    // ✅ MATCH THE LOGIN COOKIE OPTIONS
+    const isProduction = process.env.NODE_ENV === "production";
+    
     const cookieOptions = {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "none"
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax", // ✅ Must match login
+        path: "/"
     };
 
     res.clearCookie("accessToken", cookieOptions);

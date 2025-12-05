@@ -1,8 +1,18 @@
 import axios from "axios";
 
-export const loginUser = (data) => {
+const API = "http://localhost:5001";
+
+const registerUser = (data) => {
   return axios.post(
-    "http://localhost:5001/api/v1/auth/login",
+    `${API}/api/v1/auth/register`,
+    data,
+    { withCredentials: true }
+  );
+};
+
+const loginUser = (data) => {
+  return axios.post(
+    `${API}/api/v1/auth/login`,
     data,
     {
       withCredentials: true, 
@@ -10,8 +20,20 @@ export const loginUser = (data) => {
   );
 };
 
-export const logoutUser = () => {
-  return axios.post("http://localhost:5001/api/v1/auth/logout", {}, {
-    withCredentials: true
-  });
+const logoutUser = async () => {
+  const response = await axios.post(
+    `${API}/api/v1/auth/logout`,
+    {},
+    {
+      withCredentials: true, 
+    }
+  );
+
+  return response.data;
+};
+
+export { 
+    registerUser, 
+    loginUser, 
+    logoutUser 
 };
