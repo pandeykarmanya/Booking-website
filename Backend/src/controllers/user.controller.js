@@ -7,9 +7,19 @@ import { User } from "../models/user.model.js";
    Get Current Logged-In User
 -------------------------------------------------------------------*/
 const getCurrentUser = asyncHandler(async (req, res) => {
-    return res.status(200).json(
-        new ApiResponse(200, req.user, "User fetched successfully")
+  const userId = req.user.id || req.user._id;
+  const user = await User.findById(userId).select("-password");
+  
+  if (!user) {
+    return res.status(404).json(
+      new ApiResponse(404, null, "User not found")
     );
+  }
+  
+  return res.status(200).json(
+    new ApiResponse(200, user, "User fetched successfully")
+    // Make sure ApiResponse is: (statusCode, data, message)
+  );
 });
 
 /* ------------------------------------------------------------------

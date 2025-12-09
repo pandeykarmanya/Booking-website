@@ -1,9 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TrendingUp, Ticket, X } from "lucide-react";
 import Navbar from "../components/Navbar";
 
 export default function UserDashboard() {
   const [activeTab, setActiveTab] = useState("upcoming");
+  const [user, setUser] = useState(null);
+
+  const getInitials = (name) => {
+    if (!name) return "U";
+    const parts = name.split(" ");
+    return parts.map((p) => p[0].toUpperCase()).join("");
+  };
+  
+  // Fetch logged-in user details
+useEffect(() => {
+  const fetchUser = async () => {
+    try {
+      const res = await fetch("http://localhost:5001/api/v1/user/me", {
+        method: "GET",
+        credentials: "include",
+      });
+
+      const data = await res.json();
+      console.log("USER RESPONSE:", data);
+
+      // Based on your response structure, user data is in data.message
+      if (data.success && data.message) {
+        setUser(data.message);  // CHANGE THIS LINE
+      }
+
+    } catch (err) {
+      console.error("Error:", err);
+    }
+  };
+
+  fetchUser();
+}, []);
 
   return (
     <div className="min-h-screen bg-gray-50 pt-28 px-6">
@@ -15,17 +47,21 @@ export default function UserDashboard() {
         {/* Profile Header */}
         <div className="bg-white rounded-2xl shadow p-6 flex flex-col md:flex-row items-center justify-between">
           <div className="flex items-center space-x-4">
-            {/* Profile Image or Initials */}
+
+            {/* Dynamic Profile Initials */}
             <div className="bg-blue-100 text-blue-700 font-semibold text-2xl rounded-full w-16 h-16 flex items-center justify-center">
-              {/* Replace JD with dynamic initials */}
-              JD
+               {user ? getInitials(user.name) : "U"}
             </div>
 
             {/* User Info */}
             <div>
-              {/* Replace static text with dynamic data from backend */}
-              <h2 className="text-2xl font-semibold">User Name</h2>
-              <p className="text-gray-500">Department: Computer Science</p>
+              <h2 className="text-2xl font-semibold">
+                {user ? user.name : "Loading..."}
+              </h2>
+
+              <p className="text-gray-500">
+                Department: {user?.department || "Not Available"}
+              </p>
             </div>
           </div>
 
@@ -61,7 +97,7 @@ export default function UserDashboard() {
               <h3 className="text-2xl font-bold mt-1">--</h3>
               <p className="text-sm text-gray-400 mt-1">Update soon</p>
             </div>
-            <X className="text-blue-600 w-8 h-8"/>
+            <X className="text-blue-600 w-8 h-8" />
           </div>
         </div>
 
