@@ -1,138 +1,116 @@
-import { useEffect, useState } from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { checkAvailability } from "../api/bookingApi";
 
-function Booking() {
-  const [showTimeModal, setShowTimeModal] = useState(true);
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
+function BookingPage() {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    date: "",
+    startTime: "",
+    endTime: "",
+  });
+  
+  const [isChecking, setIsChecking] = useState(false);
 
-  const [available, setAvailable] = useState([]);
-  const [booked, setBooked] = useState([]);
-
-  const [loading, setLoading] = useState(false);
-
-  // Fetch available auditoriums
-  const fetchAvailableAuditoriums = async () => {
-    if (!startTime || !endTime) {
-      alert("Please select both times");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const res = await fetch(
-        `/api/v1/auditoriums/available?start=${startTime}&end=${endTime}`
-      );
-
-      const data = await res.json();
-
-      setAvailable(data.available || []);
-      setBooked(data.booked || []);
-
-      setShowTimeModal(false);
-    } catch (err) {
-      console.error("Fetch error:", err);
-    }
-
-    setLoading(false);
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
 
+  const handleCheck = async () => {
+  const { date, startTime, endTime } = formData;
+
+  if (!date || !startTime || !endTime) {
+    alert("Please select date, start time, and end time");
+    return;
+  }
+
+  setIsChecking(true);
+
+  try {
+    const response = await checkAvailability(
+      formData.date,
+      formData.startTime,
+      formData.endTime
+    );
+
+    console.log("BACKEND RESPONSE:", response.data);
+
+    navigate("/available-venues", {
+      state: {
+        availableVenues: response.data.message.availableVenues,
+        bookingDetails: formData,
+      },
+    });
+
+  } catch (error) {
+    console.error("Error checking availability:", error);
+  } finally {
+    setIsChecking(false);
+  }
+};
+
   return (
-    <div className="min-h-screen bg-linear-to-br from-primary/20 to-primary/5 p-8">
+    <div className="min-h-screen bg-gray-50 pt-28 px-6">
+      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-8">
+        <h2 className="text-3xl font-bold text-gray-800 mb-6">Book Venue</h2>
 
-      {/* Header */}
-      <h1 className="text-3xl font-bold mb-6">Book an Auditorium</h1>
-
-      {/* ---------- TIME MODAL ---------- */}
-      {showTimeModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-2xl w-96 shadow-xl">
-            <h2 className="text-xl font-bold mb-5 text-center">
-              Select Time Slot
-            </h2>
-
-            <label className="block text-sm font-medium mb-1">Start Time</label>
+        <div className="space-y-4">
+          {/* Event Date */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Event Date *
+            </label>
             <input
-              type="time"
-              className="w-full border p-2 rounded mb-4"
-              onChange={(e) => setStartTime(e.target.value)}
+              type="date"
+              name="date"
+              value={formData.date}
+              onChange={handleInputChange}
+              min={new Date().toISOString().split("T")[0]}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-
-            <label className="block text-sm font-medium mb-1">End Time</label>
-            <input
-              type="time"
-              className="w-full border p-2 rounded mb-4"
-              onChange={(e) => setEndTime(e.target.value)}
-            />
-
-            <button
-              onClick={fetchAvailableAuditoriums}
-              className="w-full bg-primary text-white p-2 rounded-lg mt-2"
-            >
-              {loading ? "Checking..." : "Continue"}
-            </button>
           </div>
+
+          {/* Time Range */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Start Time *
+              </label>
+              <input
+                type="time"
+                name="startTime"
+                value={formData.startTime}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                End Time *
+              </label>
+              <input
+                type="time"
+                name="endTime"
+                value={formData.endTime}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Check Availability Button */}
+          <button
+            onClick={handleCheck}
+            disabled={isChecking}
+            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-400"
+          >
+            {isChecking ? "Checking..." : "Check Availability"}
+          </button>
         </div>
-      )}
-
-      {/* ---------- LOADING ---------- */}
-      {loading && (
-        <p className="text-lg font-medium text-gray-700 mt-6">Loading...</p>
-      )}
-
-      {/* ---------- DISPLAY RESULTS ---------- */}
-      {!loading && !showTimeModal && (
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {/* AVAILABLE */}
-          {available.length > 0 && (
-            <>
-              <h2 className="col-span-full text-2xl font-semibold">
-                Available Auditoriums
-              </h2>
-
-              {available.map((a) => (
-                <div
-                  key={a.id}
-                  className="p-6 bg-green-200 border border-green-500 rounded-2xl shadow cursor-pointer hover:scale-105 transition"
-                >
-                  <h3 className="text-lg font-bold">{a.name}</h3>
-                  <p className="text-sm mt-1">Available</p>
-                </div>
-              ))}
-            </>
-          )}
-
-          {/* BOOKED */}
-          {booked.length > 0 && (
-            <>
-              <h2 className="col-span-full text-2xl font-semibold mt-8">
-                Already Booked
-              </h2>
-
-              {booked.map((b) => (
-                <div
-                  key={b.id}
-                  className="p-6 bg-red-200 border border-red-500 rounded-2xl shadow"
-                >
-                  <h3 className="text-lg font-bold">{b.name}</h3>
-                  <p className="text-sm mt-1">
-                    Booked from {b.start} to {b.end}
-                  </p>
-                </div>
-              ))}
-            </>
-          )}
-
-          {/* NO DATA */}
-          {available.length === 0 && booked.length === 0 && (
-            <p className="col-span-full text-center text-gray-600 text-lg">
-              No auditoriums found for this time slot.
-            </p>
-          )}
-        </div>
-      )}
+      </div>
     </div>
   );
 }
 
-export default Booking;
+export default BookingPage;

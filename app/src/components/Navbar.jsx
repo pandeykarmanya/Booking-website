@@ -41,12 +41,12 @@ export default function Navbar() {
 
           <ul className="hidden md:flex space-x-6 font-medium">
             <li>
-              <Link to="/user" className="hover:text-gray-200 transition">
+              <Link to="/booking" className="hover:text-gray-200 transition">
                 Booking
               </Link>
             </li>
             <li>
-              <Link to="/about" className="hover:text-gray-200 transition">
+              <Link to="/gg" className="hover:text-gray-200 transition">
                 Occupied
               </Link>
             </li>
