@@ -1,6 +1,6 @@
 import mongoose, {Schema} from "mongoose";
 
-const venueScehma = new mongoose.Scehma({
+const venueSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true
@@ -10,4 +10,4 @@ const venueScehma = new mongoose.Scehma({
     timestamps: true
 });
 
-export const Venue = mongoose.model('Venue', venueScehma);
+export const Venue = mongoose.model('Venue', venueSchema);
