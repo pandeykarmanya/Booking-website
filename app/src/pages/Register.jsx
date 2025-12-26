@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import InputField from "../components/InputField";
 import Button from "../components/Button";
+import { registerUser } from "../api/auth";
 
 export default function Register() {
   const [form, setForm] = useState({

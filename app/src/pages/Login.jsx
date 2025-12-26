@@ -41,7 +41,7 @@ export default function Login() {
     const data = await response.json();
 
     if (response.ok) {
-      const userRole = data.message.user.role; // ✅ Changed this line
+      const userRole = data.data.user.role; // ✅ Changed this line
       
       if (userRole === 'admin') {
         navigate('/admin');
@@ -51,7 +51,7 @@ export default function Login() {
         navigate('/dashboard');
       }
     } else {
-      setError(data.message || "Login failed");
+      setError(data.data || "Login failed");
     }
   } catch (error) {
     console.error('Login error:', error);
