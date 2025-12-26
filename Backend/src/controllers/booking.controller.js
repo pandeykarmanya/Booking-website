@@ -1,8 +1,8 @@
 import { Booking } from "../models/booking.model.js";
+import { Venue } from "../models/venue.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { FIXED_VENUES } from "../constants/venues.js";
 
 /*----------------------------------------------
    🧮 Helper - Convert time string to minutes
@@ -23,7 +23,6 @@ const isOverlapping = (s1, e1, s2, e2) => {
    🟩 USER — Check Available Venues
 ----------------------------------------------*/
 const getAvailableVenues = asyncHandler(async (req, res) => {
-    // Changed from req.body to req.query for GET request
     const { date, startTime, endTime } = req.query;
 
     if (!date || !startTime || !endTime) {
@@ -37,33 +36,44 @@ const getAvailableVenues = asyncHandler(async (req, res) => {
         throw new ApiError(400, "End time must be greater than start time");
     }
 
-    // Get all confirmed bookings on the same date
+    const bookingDate = new Date(date);
+
+    // Get all confirmed bookings on same date
     const bookings = await Booking.find({
-        date,
+        date: bookingDate,
         status: "confirmed"
     });
 
-    const unavailable = new Set();
+    const unavailableVenueIds = new Set();
 
     bookings.forEach((b) => {
         const bookStart = timeToMinutes(b.startTime);
         const bookEnd = timeToMinutes(b.endTime);
 
         if (isOverlapping(reqStart, reqEnd, bookStart, bookEnd)) {
-            unavailable.add(b.venue);
+            unavailableVenueIds.add(b.venue.toString());
         }
     });
 
-    const available = FIXED_VENUES.filter(v => !unavailable.has(v.id));
+    // Get all venues from DB
+    const allVenues = await Venue.find();
+
+    // Filter available venues
+    const availableVenues = allVenues.filter(
+        v => !unavailableVenueIds.has(v._id.toString())
+    );
 
     return res.status(200).json(
-        new ApiResponse(200, {
-            date,
-            startTime,
-            endTime,
-            availableVenues: available,
-            unavailableVenues: [...unavailable]
-        }, "Available venues fetched successfully")
+        new ApiResponse(
+            200,
+            {
+                date,
+                startTime,
+                endTime,
+                availableVenues
+            },
+            "Available venues fetched successfully"
+        )
     );
 });
 
@@ -78,22 +88,25 @@ const createBooking = asyncHandler(async (req, res) => {
         throw new ApiError(400, "All fields are required");
     }
 
-    // Validate venue exists
-    const selectedVenue = FIXED_VENUES.find(v => v.id === venue);
-    if (!selectedVenue) {
-        throw new ApiError(400, "Invalid venue selected");
+    // ✅ Validate venue from DB
+    const venueExists = await Venue.findById(venue);
+    if (!venueExists) {
+        throw new ApiError(400, "Venue not found");
     }
 
     const reqStart = timeToMinutes(startTime);
     const reqEnd = timeToMinutes(endTime);
+
     if (reqEnd <= reqStart) {
         throw new ApiError(400, "End time must be greater than start time");
     }
 
+    const bookingDate = new Date(date);
+
     // Check overlapping bookings
     const exists = await Booking.findOne({
         venue,
-        date,
+        date: bookingDate,
         status: "confirmed",
         $or: [
             { startTime: { $lt: endTime }, endTime: { $gt: startTime } }
@@ -108,7 +121,7 @@ const createBooking = asyncHandler(async (req, res) => {
     const booking = await Booking.create({
         user: userId,
         venue,
-        date,
+        date: bookingDate,
         startTime,
         endTime
     });
@@ -127,7 +140,6 @@ const cancelBooking = asyncHandler(async (req, res) => {
     const booking = await Booking.findById(bookingId);
     if (!booking) throw new ApiError(404, "Booking not found");
 
-    // Only admin OR owner can cancel
     if (
         req.user.role !== "admin" &&
         booking.user.toString() !== req.user._id.toString()
@@ -147,7 +159,9 @@ const cancelBooking = asyncHandler(async (req, res) => {
    🟥 ADMIN — Get All Bookings
 ----------------------------------------------*/
 const getAllBookings = asyncHandler(async (req, res) => {
-    const bookings = await Booking.find().populate("user", "name email");
+    const bookings = await Booking.find()
+        .populate("user", "name email")
+        .populate("venue", "name location capacity");
 
     return res.status(200).json(
         new ApiResponse(200, bookings, "All bookings fetched successfully")
@@ -160,7 +174,9 @@ const getAllBookings = asyncHandler(async (req, res) => {
 const getMyBookings = asyncHandler(async (req, res) => {
     const myBookings = await Booking.find({
         user: req.user._id
-    }).sort({ date: -1 });
+    })
+        .populate("venue", "name location")
+        .sort({ date: -1 });
 
     return res.status(200).json(
         new ApiResponse(200, myBookings, "Your bookings fetched successfully")
@@ -168,7 +184,7 @@ const getMyBookings = asyncHandler(async (req, res) => {
 });
 
 /*----------------------------------------------
-   📤 EXPORT (bottom as you prefer)
+   📤 EXPORT
 ----------------------------------------------*/
 export {
     getAvailableVenues,

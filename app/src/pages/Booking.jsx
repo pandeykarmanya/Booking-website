@@ -38,7 +38,7 @@ function BookingPage() {
 
     navigate("/available-venues", {
       state: {
-        availableVenues: response.data.message.availableVenues,
+        availableVenues: response.data.data.availableVenues,
         bookingDetails: formData,
       },
     });
@@ -112,5 +112,4 @@ function BookingPage() {
     </div>
   );
 }
-
 export default BookingPage;

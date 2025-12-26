@@ -13,10 +13,10 @@ import { adminMiddleware } from "../middlewares/admin.middleware.js";
 const router = express.Router();
 
 // USER ROUTES
-router.get("/check-availability", authMiddleware, getAvailableVenues); // Changed to GET
+router.get("/check-availability", authMiddleware, getAvailableVenues); 
 router.post("/create", authMiddleware, createBooking);
 router.get("/my-bookings", authMiddleware, getMyBookings);
-router.put("/cancel/:bookingId", authMiddleware, cancelBooking); // Changed to PUT
+router.put("/cancel/:bookingId", authMiddleware, cancelBooking); 
 
 // ADMIN ROUTES
 router.get("/all", authMiddleware, adminMiddleware, getAllBookings);

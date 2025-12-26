@@ -7,12 +7,12 @@ const bookingSchema = new mongoose.Schema({
         required: true
     },
     venue: {
-        type: String,
-        enum: ["Chankaya", "Dronavcharya", "Seminar Hall-1", "Seminar Hall-2"],
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Venue",
         required: true,
     },
     date: {
-        type: Date,
+        type: String,
         required: true
     },
     startTime:{
