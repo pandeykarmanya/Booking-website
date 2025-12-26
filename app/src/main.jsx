@@ -6,7 +6,8 @@ import UserDashboard from "./pages/UserDashboard.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
-import UserBooking from "./pages/Booking.jsx";
+import Booking from "./pages/Booking.jsx";
+import AvailableVenues from "./pages/AvailableVenues";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -16,7 +17,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/user" element={<UserDashboard />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/booking" element={<UserBooking />} />
+        <Route path="/booking" element={<Booking />} />
+        <Route path="/available-venues" element={<AvailableVenues />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>
