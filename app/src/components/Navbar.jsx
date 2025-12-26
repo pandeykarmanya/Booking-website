@@ -36,18 +36,13 @@ export default function Navbar() {
         <div className="bg-linear-to-r from-[rgba(120,2,24,0.6)] to-[rgba(154,3,30,0.5)] backdrop-blur-md rounded-full shadow-md flex justify-between items-center px-6 py-3 text-white">
 
           <Link to="/" className="text-2xl font-bold hover:opacity-90 transition-opacity">
-            Booking
+            BOOKING
           </Link>
 
           <ul className="hidden md:flex space-x-6 font-medium">
             <li>
               <Link to="/booking" className="hover:text-gray-200 transition">
                 Booking
-              </Link>
-            </li>
-            <li>
-              <Link to="/gg" className="hover:text-gray-200 transition">
-                Occupied
               </Link>
             </li>
           </ul>
@@ -85,11 +80,8 @@ export default function Navbar() {
 
         {menuOpen && (
           <div className="md:hidden mt-3 bg-[rgba(154,3,30,0.3)] backdrop-blur-md rounded-2xl text-white shadow-lg py-4 space-y-3 text-center">
-            <Link to="/user" onClick={() => setMenuOpen(false)} className="block hover:text-gray-200">
+            <Link to="/booking" onClick={() => setMenuOpen(false)} className="block hover:text-gray-200">
               Booking
-            </Link>
-            <Link to="/about" onClick={() => setMenuOpen(false)} className="block hover:text-gray-200">
-              Occupied
             </Link>
           </div>
         )}
