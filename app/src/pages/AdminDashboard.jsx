@@ -240,9 +240,6 @@ export default function AdminDashboard() {
                       <p className="font-medium text-gray-700">
                         {booking.hallName} — {booking.date}
                       </p>
-                      <p className="text-sm text-gray-500">
-                        Department: {booking.department}
-                      </p>
                     </div>
                     <button
                       className="flex items-center gap-1 text-red-600 hover:text-red-800 transition"
@@ -274,13 +271,6 @@ export default function AdminDashboard() {
                     key={user._id}
                     className="flex justify-between items-center border-b last:border-none pb-2"
                   >
-                    <div>
-                      <p className="font-medium text-gray-700">{user.name}</p>
-                      <p className="text-sm text-gray-500">
-                        Department: {user.department} | Role: {user.role}
-                      </p>
-                    </div>
-
                     {user.role !== "admin" && (
                       <button
                         className="flex items-center gap-1 text-green-700 hover:text-green-900 transition"

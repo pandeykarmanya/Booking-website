@@ -105,7 +105,7 @@ export default function UserDashboard() {
                 {user ? user.name : "Loading..."}
               </h2>
               <p className="text-gray-500">
-                Department: {user?.department || "Not Available"}
+                Email: {user?.email || "Not Available"}
               </p>
             </div>
           </div>
@@ -205,7 +205,7 @@ function BookingCard({ booking, past }) {
       <span
         className={`px-3 py-1 text-xs rounded-full ${
           past
-            ? "bg-gray-200 text-gray-600"
+            ? "bg-red-100 text-red-700"
             : "bg-green-100 text-green-700"
         }`}
       >
