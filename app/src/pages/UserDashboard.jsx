@@ -109,10 +109,6 @@ export default function UserDashboard() {
               </p>
             </div>
           </div>
-
-          <button className="mt-4 md:mt-0 px-5 py-2 bg-blue-100 text-blue-700 rounded-full">
-            Edit Profile
-          </button>
         </div>
 
         {/* STATS */}
