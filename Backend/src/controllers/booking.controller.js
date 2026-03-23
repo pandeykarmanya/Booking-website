@@ -156,6 +156,62 @@ const cancelBooking = asyncHandler(async (req, res) => {
 });
 
 /*----------------------------------------------
+   🟥 ADMIN — Delete Booking (Permanently)
+----------------------------------------------*/
+// In your backend bookingController.js
+
+const deleteBooking = async (req, res) => {
+  try {
+    console.log("=== DELETE BOOKING CALLED ===");
+    console.log("Full req.params:", req.params);
+    console.log("bookingId from params:", req.params.bookingId);
+    
+    const { bookingId } = req.params;
+    
+    if (!bookingId) {
+      console.log("ERROR: No bookingId provided");
+      return res.status(400).json({ message: "Booking ID is required" });
+    }
+    
+    console.log("Attempting to delete booking with ID:", bookingId);
+    
+    // Try to find the booking first
+    const existingBooking = await Booking.findById(bookingId);
+    console.log("Found booking before delete:", existingBooking);
+    
+    if (!existingBooking) {
+      console.log("ERROR: Booking not found in database");
+      return res.status(404).json({ message: "Booking not found" });
+    }
+    
+    // Now delete it
+    const deletedBooking = await Booking.findByIdAndDelete(bookingId);
+    console.log("Deleted booking result:", deletedBooking);
+    
+    // Verify it's actually gone
+    const stillExists = await Booking.findById(bookingId);
+    console.log("Booking still exists after delete?:", stillExists);
+    
+    if (stillExists) {
+      console.log("WARNING: Booking was NOT deleted from database!");
+    } else {
+      console.log("SUCCESS: Booking was permanently deleted");
+    }
+    
+    res.status(200).json({ 
+      message: "Booking deleted successfully",
+      booking: deletedBooking 
+    });
+    
+  } catch (error) {
+    console.error("ERROR in deleteBooking:", error);
+    res.status(500).json({ 
+      message: error.message || "Failed to delete booking" 
+    });
+  }
+};
+
+/*----------------------------------------------
    🟥 ADMIN — Get All Bookings
 ----------------------------------------------*/
 const getAllBookings = asyncHandler(async (req, res) => {
@@ -184,12 +240,36 @@ const getMyBookings = asyncHandler(async (req, res) => {
 });
 
 /*----------------------------------------------
+   🟩 TODAY BOOKING
+----------------------------------------------*/
+export const getTodayBookings = asyncHandler(async (req, res) => {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date();
+  end.setHours(23, 59, 59, 999);
+
+  const bookings = await Booking.find({
+    date: { $gte: start, $lte: end },
+    status: { $ne: "cancelled" },
+  })
+    .populate("user", "name")   
+    .populate("venue", "name")  
+    .sort({ startTime: 1 });
+
+  return res.status(200).json(
+    new ApiResponse(200, bookings, "Today's bookings fetched successfully")
+  );
+});
+
+/*----------------------------------------------
    📤 EXPORT
 ----------------------------------------------*/
 export {
     getAvailableVenues,
     createBooking,
     cancelBooking,
+    deleteBooking,
     getAllBookings,
     getMyBookings
 };
