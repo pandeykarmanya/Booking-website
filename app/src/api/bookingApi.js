@@ -26,3 +26,8 @@ export const cancelBooking = async (id) => {
 export const getAllBookings = async () => {
     return axios.get("/booking/all");
 };
+
+// Get All Users
+export const getAllUsers = async () => {
+    return axios.get("/users/all");
+};

@@ -57,6 +57,12 @@ export default function UserDashboard() {
           const past = [];
 
           data.data.forEach((b) => {
+            // ✅ CANCELLED BOOKINGS ALWAYS GO TO PAST
+            if (b.status === 'cancelled') {
+              past.push(b);
+              return;
+            }
+
             if (!b.date || !b.endTime) return;
 
             // ✅ Correct date + time handling
@@ -70,6 +76,12 @@ export default function UserDashboard() {
               past.push(b);
             }
           });
+
+          // Sort upcoming bookings by date (earliest first)
+          upcoming.sort((a, b) => new Date(a.date) - new Date(b.date));
+          
+          // Sort past bookings by date (most recent first - latest to oldest)
+          past.sort((a, b) => new Date(b.date) - new Date(a.date));
 
           setUpcomingBookings(upcoming);
           setPastBookings(past);
@@ -186,6 +198,9 @@ function StatCard({ label, value, icon }) {
 }
 
 function BookingCard({ booking, past }) {
+  // Determine if booking was cancelled
+  const isCancelled = booking.status === 'cancelled';
+  
   return (
     <div className="border rounded-xl p-4 mb-4 flex justify-between items-center">
       <div>
@@ -200,12 +215,14 @@ function BookingCard({ booking, past }) {
 
       <span
         className={`px-3 py-1 text-xs rounded-full ${
-          past
+          isCancelled
             ? "bg-red-100 text-red-700"
+            : past
+            ? "bg-green-100 text-green-700"
             : "bg-green-100 text-green-700"
         }`}
       >
-        {past ? "Completed" : "Upcoming"}
+        {isCancelled ? "Cancelled by Admin" : past ? "Completed" : "Upcoming"}
       </span>
     </div>
   );
