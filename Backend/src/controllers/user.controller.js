@@ -90,9 +90,50 @@ const requestAdminRole = asyncHandler(async (req, res) => {
     );
 });
 
+const makeAdmin = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  if (user.role === "admin") {
+    throw new ApiError(400, "User is already an admin");
+  }
+
+  user.role = "admin";
+  await user.save({ validateBeforeSave: false });
+
+  return res.status(200).json(
+    new ApiResponse(200, null, "User promoted to admin successfully")
+  );
+});
+
+/* ------------------------------------------------------------------
+   Get All Users
+-------------------------------------------------------------------*/
+const getAllUsers = asyncHandler(async (req, res) => {
+    // Optional: restrict to admin
+    if (req.user.role !== "admin") {
+        throw new ApiError(403, "You are not authorized to access this resource");
+    }
+
+    const users = await User.find()
+        .select("-password -refreshToken")
+        .sort({ createdAt: -1 });
+
+    return res.status(200).json(
+        new ApiResponse(200, users, "All users fetched successfully")
+    );
+});
+
 export {
     getCurrentUser,
     updateName,
     changePassword,
-    requestAdminRole
+    requestAdminRole,
+    getAllUsers,
+    makeAdmin
 };
