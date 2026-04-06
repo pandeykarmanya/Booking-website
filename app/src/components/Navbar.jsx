@@ -35,11 +35,13 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-6 py-3">
         <div className="bg-linear-to-r from-[rgba(120,2,24,0.6)] to-[rgba(154,3,30,0.5)] backdrop-blur-md rounded-full shadow-md flex justify-between items-center px-6 py-3 text-white">
 
-          <img
-            src="/public/images/its-logo.png"
-            alt="ITS Logo"
-            className="w-12 h-12 rounded-full object-contain bg-white p-1 border-2 border-white/60"
-          />
+          <Link to="/">
+            <img
+              src="/public/images/its-logo.png"
+              alt="ITS Logo"
+              className="w-12 h-12 rounded-full object-contain bg-white p-1 border-2 border-white/60"
+            />
+          </Link>
           
           <ul className="hidden md:flex space-x-6 font-medium">
             <li>
