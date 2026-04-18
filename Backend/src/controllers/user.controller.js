@@ -7,40 +7,15 @@ import { User } from "../models/user.model.js";
    Get Current Logged-In User
 -------------------------------------------------------------------*/
 const getCurrentUser = asyncHandler(async (req, res) => {
-  const userId = req.user.id || req.user._id;
-  const user = await User.findById(userId).select("-password");
+  const user = await User.findById(req.user._id).select("-password -refreshToken");
   
   if (!user) {
-    return res.status(404).json(
-      new ApiResponse(404, null, "User not found")
-    );
+    throw new ApiError(404, "User not found");
   }
   
   return res.status(200).json(
     new ApiResponse(200, user, "User fetched successfully")
-    // Make sure ApiResponse is: (statusCode, data, message)
   );
-});
-
-/* ------------------------------------------------------------------
-   Update User Name Only
--------------------------------------------------------------------*/
-const updateName = asyncHandler(async (req, res) => {
-    const { name } = req.body;
-
-    if (!name) {
-        throw new ApiError(400, "Name is required");
-    }
-
-    const updatedUser = await User.findByIdAndUpdate(
-        req.user._id,
-        { $set: { name } },
-        { new: true }
-    ).select("-password -refreshToken");
-
-    return res
-        .status(200)
-        .json(new ApiResponse(200, updatedUser, "Name updated successfully"));
 });
 
 /* ------------------------------------------------------------------
@@ -53,45 +28,55 @@ const changePassword = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Old and new password are required");
     }
 
+    // Validate new password length first
+    if (newPassword.length < 8) {
+        throw new ApiError(400, "Password must be at least 8 characters long");
+    }
+    
+    // Check if new password is same as old
+    if (oldPassword === newPassword) {
+        throw new ApiError(400, "New password must be different from old password");
+    }
+
     const user = await User.findById(req.user._id);
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
 
     const isCorrect = await user.isPasswordCorrect(oldPassword);
 
     if (!isCorrect) {
-        throw new ApiError(400, "Old password is incorrect");
+        throw new ApiError(401, "Old password is incorrect");
     }
 
     user.password = newPassword;
-    await user.save({ validateBeforeSave: false });
-
-    return res
-        .status(200)
-        .json(new ApiResponse(200, {}, "Password changed successfully"));
-});
-
-const requestAdminRole = asyncHandler(async (req, res) => {
-    const userId = req.user._id;
-
-    const user = await User.findById(userId);
-
-    if (user.role === "admin") {
-        throw new ApiError(400, "You are already an admin");
-    }
-
-    if (user.adminRequest === "pending") {
-        throw new ApiError(400, "You already requested admin access");
-    }
-
-    user.adminRequest = "pending";
-    await user.save();
+    await user.save({ validateBeforeSave: true }); 
 
     return res.status(200).json(
-        new ApiResponse(200, "Admin role request submitted")
+        new ApiResponse(200, {}, "Password changed successfully")
     );
 });
 
+/* ------------------------------------------------------------------
+   Make User Admin 
+-------------------------------------------------------------------*/
 const makeAdmin = asyncHandler(async (req, res) => {
+  // Only admins can promote users
+  if (req.user.role !== "admin") {
+    throw new ApiError(403, "Only admins can promote users");
+  }
+
   const { userId } = req.params;
+
+  if (!userId) {
+    throw new ApiError(400, "User ID is required");
+  }
+
+  // Prevent self-promotion
+  if (userId === req.user._id.toString()) {
+    throw new ApiError(400, "You cannot promote yourself");
+  }
 
   const user = await User.findById(userId);
 
@@ -107,33 +92,47 @@ const makeAdmin = asyncHandler(async (req, res) => {
   await user.save({ validateBeforeSave: false });
 
   return res.status(200).json(
-    new ApiResponse(200, null, "User promoted to admin successfully")
+    new ApiResponse(200, { userId: user._id, role: user.role }, "User promoted to admin successfully")
   );
 });
 
 /* ------------------------------------------------------------------
-   Get All Users
+   Get All Users 
 -------------------------------------------------------------------*/
 const getAllUsers = asyncHandler(async (req, res) => {
-    // Optional: restrict to admin
     if (req.user.role !== "admin") {
         throw new ApiError(403, "You are not authorized to access this resource");
     }
 
-    const users = await User.find()
-        .select("-password -refreshToken")
-        .sort({ createdAt: -1 });
+    const page = parseInt(req.query.page) || 1;
+    const limit = Math.min(parseInt(req.query.limit) || 10, 100); // Max 100 per page
+    const skip = (page - 1) * limit;
+
+    const [users, total] = await Promise.all([
+        User.find()
+            .select("-password -refreshToken")
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit),
+        User.countDocuments()
+    ]);
 
     return res.status(200).json(
-        new ApiResponse(200, users, "All users fetched successfully")
+        new ApiResponse(200, {
+            users,
+            pagination: {
+                page,
+                limit,
+                total,
+                pages: Math.ceil(total / limit)
+            }
+        }, "All users fetched successfully")
     );
 });
 
 export {
     getCurrentUser,
-    updateName,
     changePassword,
-    requestAdminRole,
-    getAllUsers,
-    makeAdmin
+    makeAdmin,
+    getAllUsers
 };

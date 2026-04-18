@@ -4,32 +4,85 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 /* ------------------------------------------------------------------
-   Get ALL pending admin requests   (ADMIN ONLY)
+   Get Admin Requests (ADMIN ONLY)
 -------------------------------------------------------------------*/
 const getAdminRequests = asyncHandler(async (req, res) => {
-    const requests = await User.find({ adminRequest: "pending" })
-        .select("-password -refreshToken");
+    // Authorization check
+    if (req.user.role !== "admin") {
+        throw new ApiError(403, "Only admins can view admin requests");
+    }
+
+    // Pagination
+    const page = parseInt(req.query.page) || 1;
+    const limit = Math.min(parseInt(req.query.limit) || 10, 100);
+    const skip = (page - 1) * limit;
+
+    // Filter by status (default: pending)
+    const status = req.query.status || "pending";
+    const validStatuses = ["pending", "approved", "rejected"];
+    
+    if (!validStatuses.includes(status)) {
+        throw new ApiError(400, "Invalid status. Must be pending, approved, or rejected");
+    }
+
+    const filter = { adminRequest: status };
+
+    const [requests, total] = await Promise.all([
+        User.find(filter)
+            .select("-password -refreshToken")
+            .sort({ updatedAt: -1 })
+            .skip(skip)
+            .limit(limit),
+        User.countDocuments(filter)
+    ]);
 
     return res.status(200).json(
-        new ApiResponse(200, requests, "Pending admin requests fetched")
+        new ApiResponse(200, {
+            requests,
+            pagination: {
+                page,
+                limit,
+                total,
+                pages: Math.ceil(total / limit),
+                hasNext: page < Math.ceil(total / limit),
+                hasPrev: page > 1
+            }
+        }, `Admin requests (${status}) fetched successfully`)
     );
-});
+}); 
 
 /* ------------------------------------------------------------------
-   Approve OR Reject admin request   (ADMIN ONLY)
+   Handle Admin Request 
 -------------------------------------------------------------------*/
 const handleAdminRequest = asyncHandler(async (req, res) => {
-    const { decision } = req.body;       // expected: "approve" or "reject"
+    // Authorization check
+    if (req.user.role !== "admin") {
+        throw new ApiError(403, "Only admins can handle admin requests");
+    }
+
+    const { decision } = req.body;
     const { userId } = req.params;
 
-    // Validate decision
+    // Validate inputs
+    if (!userId) {
+        throw new ApiError(400, "User ID is required");
+    }
+
     if (!decision || !["approve", "reject"].includes(decision)) {
         throw new ApiError(400, "Decision must be 'approve' or 'reject'");
     }
 
+    // Prevent self-approval
+    if (userId === req.user._id.toString()) {
+        throw new ApiError(400, "You cannot approve your own admin request");
+    }
+
     // Find the user
     const user = await User.findById(userId);
-    if (!user) throw new ApiError(404, "User not found");
+    
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
 
     // Check if request is actually pending
     if (user.adminRequest !== "pending") {
@@ -49,13 +102,19 @@ const handleAdminRequest = asyncHandler(async (req, res) => {
     return res.status(200).json(
         new ApiResponse(
             200,
-            { userId: user._id, newRole: user.role, adminRequest: user.adminRequest },
+            { 
+                userId: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                adminRequest: user.adminRequest 
+            },
             `Admin request ${decision}d successfully`
         )
     );
-});
+}); 
 
 export {
     getAdminRequests,
-    handleAdminRequest 
+    handleAdminRequest
 };
