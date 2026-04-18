@@ -66,6 +66,14 @@ export default function AdminNavbar({ activeTab, setActiveTab }) {
                 Venues
               </button>
             </li>
+            <li>
+              <button
+                onClick={() => navigate("/admin/upcoming-bookings")}
+                className={`hover:text-gray-200 ${activeTab === "venues" ? "underline font-semibold" : ""}`}
+              >
+                Pre-Bookings
+              </button>
+            </li>
           </ul>
 
           <div className="flex items-center gap-3">
@@ -107,9 +115,13 @@ export default function AdminNavbar({ activeTab, setActiveTab }) {
             <button onClick={() => { navigate("/admin"); setActiveTab?.("users"); setMenuOpen(false); }} className="block w-full hover:text-gray-200 py-2">
               Users
             </button>
-            <button onClick={() => navigate("/admin/add-venue")} className="block w-full hover:text-gray-200 py-2">
-              Venues
-            </button>
+              <button onClick={() => navigate("/admin/add-venue")} className="block w-full hover:text-gray-200 py-2">
+                Venues
+              </button>
+              <button onClick={() => navigate("/admin/upcoming-bookings")} className="block w-full hover:text-gray-200 py-2">
+                Pre-Bookings
+              </button>
+
           </div>
         )}
       </div>
