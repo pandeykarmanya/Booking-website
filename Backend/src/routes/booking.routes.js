@@ -5,7 +5,8 @@ import {
     cancelBooking,
     getAllBookings,
     getMyBookings,
-    getTodayBookings
+    getTodayBookings,
+    getUpcomingBookings,
 } from "../controllers/booking.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -23,5 +24,6 @@ router.get("/today", authMiddleware, getTodayBookings);
 
 // ADMIN ROUTES
 router.get("/all", authMiddleware, adminMiddleware, getAllBookings);
+router.get("/upcoming", getUpcomingBookings);
 
 export default router;

@@ -1,10 +1,14 @@
 import express from "express";
-import { addVenue, getVenues } from "../controllers/venue.controller.js";
-import { authMiddleware, authorizeRoles } from "../middlewares/auth.middleware.js";
+import { 
+    addVenue, 
+    getVenues, 
+    deleteVenue
+ } from "../controllers/venue.controller.js";
 
 const router = express.Router();
 
-router.post("/", authMiddleware, authorizeRoles("admin"), addVenue);
+router.post("/", addVenue);
 router.get("/", getVenues);
+router.delete("/:id", deleteVenue);
 
 export default router;
