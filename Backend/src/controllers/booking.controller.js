@@ -168,7 +168,7 @@ const createBooking = asyncHandler(async (req, res) => {
         numberOfPeople: numberOfPeople || 1,
         totalAmount: totalAmount || 0,
         specialRequests: specialRequests || '',
-        status: 'pending'
+        status: 'confirmed' // Auto-confirm for simplicity; can be changed to 'pending' if admin approval is needed
     });
 
     const populatedBooking = await Booking.findById(booking._id)
@@ -176,7 +176,7 @@ const createBooking = asyncHandler(async (req, res) => {
     .populate("venue", "name location capacity pricePerHour");
 
 // ✅ Send confirmation email
-await sendBookingConfirmation(populatedBooking, req.user);
+await sendBookingConfirmation(populatedBooking, populatedBooking.user);
 
 return res.status(201).json(
     new ApiResponse(201, populatedBooking, "Booking created successfully. Confirmation email sent!")
@@ -216,7 +216,7 @@ const populatedBooking = await Booking.findById(booking._id)
 
 // Send cancellation email
 const user = req.user.role === "admin" ? populatedBooking.user : req.user;
-await sendBookingCancellation(populatedBooking, user);
+await sendBookingCancellation(populatedBooking, populatedBooking.user);
 
 return res.status(200).json(
     new ApiResponse(200, populatedBooking, "Booking cancelled successfully. Cancellation email sent!")
@@ -263,20 +263,27 @@ const getAllBookings = asyncHandler(async (req, res) => {
    🟥 ADMIN — Get Upcoming Bookings (Pre-bookings)
 ----------------------------------------------*/
 const getUpcomingBookings = asyncHandler(async (req, res) => {
-    const now = dayjs().tz(TZ).startOf("day").toDate();
-
     const bookings = await Booking.find({ 
-        date: { $gte: now },
+        date: { $gte: dayjs().tz(TZ).startOf("day").toDate() },
         status: { $ne: 'cancelled' }
     })
     .populate("user", "name email")
     .populate("venue", "name location capacity")
-    .sort({ date: 1, startTime: 1 }); // nearest first
+    .sort({ date: 1, startTime: 1 });
 
-    return res.status(200).json(
-        new ApiResponse(200, bookings, "Upcoming bookings fetched successfully")
+    const upcomingBookings = bookings.filter(b => {
+        const bookingStart = dayjs.tz(
+            `${dayjs(b.date).format("YYYY-MM-DD")} ${b.startTime}`,
+            "YYYY-MM-DD HH:mm",
+            TZ
+        );
+        return bookingStart.isAfter(dayjs().tz(TZ));
+    });
+
+    return res.status(200).json(         // ← was missing
+        new ApiResponse(200, upcomingBookings, "Upcoming bookings fetched successfully")
     );
-});
+});        
 
 /*----------------------------------------------
    🟩 USER — Get My Bookings
@@ -286,29 +293,60 @@ const getMyBookings = asyncHandler(async (req, res) => {
         .populate("venue", "name location capacity pricePerHour images")
         .sort({ date: -1 });
 
-    const now = dayjs().tz(TZ).startOf("day").toDate();
+    const now = dayjs().tz(TZ); // ✅ current time, NOT startOf("day")
 
-    // Separate into upcoming and past
-    const upcomingBookings = myBookings.filter(b => 
-        new Date(b.date) >= now && b.status !== 'cancelled'
+    const upcomingBookings = myBookings.filter(b => {
+        if (b.status === 'cancelled') return false;
+
+        // Combine booking date + startTime → full datetime
+        const bookingStart = dayjs.tz(
+            `${dayjs(b.date).format("YYYY-MM-DD")} ${b.startTime}`,
+            "YYYY-MM-DD HH:mm",
+            TZ
+        );
+
+        return bookingStart.isAfter(now); // ✅ strictly in the future
+    });
+
+    const ongoingBookings = myBookings.filter(b => {
+    if (b.status === 'cancelled') return false;
+    const bookingStart = dayjs.tz(
+        `${dayjs(b.date).format("YYYY-MM-DD")} ${b.startTime}`,
+        "YYYY-MM-DD HH:mm", TZ
     );
-    const pastBookings = myBookings.filter(b => 
-        new Date(b.date) < now || b.status === 'cancelled'
+    const bookingEnd = dayjs.tz(
+        `${dayjs(b.date).format("YYYY-MM-DD")} ${b.endTime}`,
+        "YYYY-MM-DD HH:mm", TZ
     );
+    return bookingStart.isSameOrBefore(now) && bookingEnd.isAfter(now); // in progress
+});
+
+    const pastBookings = myBookings.filter(b => {
+        if (b.status === 'cancelled') return true;
+
+        // Combine booking date + endTime → full datetime
+        const bookingEnd = dayjs.tz(
+            `${dayjs(b.date).format("YYYY-MM-DD")} ${b.endTime}`,
+            "YYYY-MM-DD HH:mm",
+            TZ
+        );
+
+        return bookingEnd.isBefore(now) || bookingEnd.isSame(now); // ✅ already ended
+    });
 
     return res.status(200).json(
         new ApiResponse(200, {
             upcoming: upcomingBookings,
+            ongoing: ongoingBookings,
             past: pastBookings,
             total: myBookings.length
         }, "Your bookings fetched successfully")
     );
 });
-
 /*----------------------------------------------
    🟩 TODAY BOOKINGS
 ----------------------------------------------*/
-export const getTodayBookings = asyncHandler(async (req, res) => {
+ const getTodayBookings = asyncHandler(async (req, res) => {
     const todayStart = dayjs().tz(TZ).startOf("day").toDate();
     const todayEnd = dayjs().tz(TZ).endOf("day").toDate();
 
@@ -569,5 +607,6 @@ export {
     getFilteredBookings,
     downloadBookingsPDF,
     getUpcomingBookings,
-    getVenueAvailability
+    getVenueAvailability,
+    getTodayBookings
 };
