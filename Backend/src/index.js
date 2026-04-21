@@ -6,9 +6,6 @@ dotenv.config({
 import connectDB from './db/db.js';
 import app from './app.js'; 
 
-console.log(process.env.EMAIL_USER);
-console.log(process.env.EMAIL_PASS);
-
 connectDB()
 .then(() => {
     app.listen(process.env.PORT || 5001)
@@ -18,5 +15,4 @@ connectDB()
 .catch((error) => {
     console.log("MONGO-DB CONNECTION FAILED", error);
 });
-
 
