@@ -108,7 +108,7 @@ const getAvailableVenues = asyncHandler(async (req, res) => {
         }
     });
 
-    const allVenues = await Venue.find();
+    const allVenues = await Venue.find({ status: "available" });
     const availableVenues = allVenues.filter(v => !unavailableVenueIds.has(v._id.toString()));
 
     return res.status(200).json(
@@ -129,6 +129,9 @@ const createBooking = asyncHandler(async (req, res) => {
 
     const venueExists = await Venue.findById(venue);
     if (!venueExists) throw new ApiError(404, "Venue not found");
+    if (venueExists.status !== "available") {
+        throw new ApiError(400, "This venue is currently under maintenance and cannot be booked");
+    }
 
     const reqStart = timeToMinutes(startTime);
     const reqEnd   = timeToMinutes(endTime);
@@ -201,8 +204,12 @@ const cancelBooking = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Booking is already cancelled");
     }
 
-    // Check if booking is in the past
-    if (booking.isPast()) {
+    if (booking.isOngoing()) {
+        throw new ApiError(400, "Cannot cancel a booking that is already in progress");
+    }
+
+    // Check if booking is in the past or already completed
+    if (booking.status === "completed" || booking.isPast()) {
         throw new ApiError(400, "Cannot cancel past bookings");
     }
 
