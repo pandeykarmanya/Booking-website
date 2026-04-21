@@ -72,7 +72,8 @@ export default function AddVenue() {
   };
 
   const handleToggleStatus = async (venue) => {
-    const newStatus = venue.status === "maintenance" ? "active" : "maintenance";
+    const newStatus =
+      venue.status === "under_maintenance" ? "available" : "under_maintenance";
     try {
       setTogglingId(venue._id);
       setError("");
@@ -164,7 +165,7 @@ export default function AddVenue() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {venues.map((venue, index) => {
-                const isMaintenance = venue.status === "maintenance";
+                const isMaintenance = venue.status === "under_maintenance";
                 return (
                   <div
                     key={venue._id || index}
@@ -187,7 +188,7 @@ export default function AddVenue() {
                               : "bg-green-100 text-green-700"
                           }`}
                         >
-                          {isMaintenance ? "🔧 Maintenance" : "✅ Active"}
+                          {isMaintenance ? "🔧 Maintenance" : "✅ Available"}
                         </span>
                         
                         <p className="text-xs text-gray-500 mt-1">
@@ -214,7 +215,7 @@ export default function AddVenue() {
                         {togglingId === venue._id
                           ? "Updating..."
                           : isMaintenance
-                          ? "Mark Active"
+                          ? "Mark Available"
                           : "Maintenance"}
                       </button>
 

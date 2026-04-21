@@ -110,7 +110,7 @@ function AvailableVenues() {
 
           <div className="grid md:grid-cols-2 gap-6">
             {venuesToShow.map((venue) => {
-              const isMaintenance = venue.status === "maintenance"; 
+              const isMaintenance = venue.status === "under_maintenance"; 
               const isAvailable = !isMaintenance && (
                 allVenues.length > 0 ? availableIds.has(venue._id || venue.id) : true
               );
