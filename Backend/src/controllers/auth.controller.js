@@ -182,9 +182,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
     return res.status(200).json(
         new ApiResponse(200, {
-            user: loggedInUser,
-            accessToken,
-            refreshToken
+            user: loggedInUser
         }, "Login successful")
     );
 });
@@ -259,10 +257,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     res.cookie("refreshToken", newRefreshToken, cookieOptions);
 
     return res.status(200).json(
-        new ApiResponse(200, { 
-            accessToken, 
-            refreshToken: newRefreshToken 
-        }, "Access token refreshed successfully")
+        new ApiResponse(200, {}, "Access token refreshed successfully")
     );
 });
 
