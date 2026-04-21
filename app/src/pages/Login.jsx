@@ -1,8 +1,10 @@
 import { useState } from "react";
+import axios from "../api/axiosInstance";
 import { Link, useNavigate } from "react-router-dom";
 import InputField from "../components/InputField";
 import Button from "../components/Button";
-import { API_BASE_URL } from "../config";
+import { useAuth } from "../components/AuthContext";
+import CollegeHeader from "../components/CollegeHeader";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -10,6 +12,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth(); 
 
   const handleLogin = async (e) => {
   e.preventDefault();
@@ -29,39 +32,31 @@ export default function Login() {
   setLoading(true);
 
   try {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json' 
-      },
-      credentials: 'include',
-      body: JSON.stringify({ email, password })
-    });
+  const res = await axios.post("/auth/login", { email, password });
+  const user = res.data?.data?.user;
+  login(user);
 
-    const data = await response.json();
-
-    if (response.ok) {
-      const userRole = data.data.user.role; // ✅ Changed this line
-      
-      if (userRole === 'admin') {
-        navigate('/admin');
-      } else if (userRole === 'user') {
-        navigate('/user');
-      } else {
-        navigate('/dashboard');
-      }
-    } else {
-      setError(data.data || "Login failed");
-    }
-  } catch (error) {
-    console.error('Login error:', error);
-    setError("Error connecting to backend");
-  } finally {
-    setLoading(false);
+  if (user?.role === 'admin') {
+    navigate('/admin');
+  } else if (user?.role === 'user') {
+    navigate('/user');
+  } else {
+    navigate('/dashboard');
   }
-};
+} catch (err) {
+  setError(err.response?.data?.message || "Invalid email or password");
+} finally {
+  setLoading(false);
+}
+  };
 
   return (
+    <div className="flex flex-col min-h-screen">
+
+      <CollegeHeader
+        logoSrc="/public/images/its-logo.png"
+      />
+
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
         <h2 className="text-3xl font-semibold text-center mb-6 text-[#9a031e]">
@@ -83,6 +78,14 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+          <p className="text-right text-sm mt-2">
+            <Link 
+              to="/forgot-password" 
+              className="text-[#9a031e] hover:opacity-80 transition"
+            >
+              Forgot Password?
+            </Link>
+          </p>
 
           {error && <p className="text-red-600 text-sm">{error}</p>}
 
@@ -99,6 +102,7 @@ export default function Login() {
           </Link>
         </p>
       </div>
+    </div>
     </div>
   );
 }
