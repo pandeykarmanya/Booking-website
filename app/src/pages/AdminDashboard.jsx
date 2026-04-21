@@ -2,7 +2,9 @@ import { useState, useRef, useEffect } from "react";
 import { Users, Menu, X, Calendar, Shield, XCircle, User } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { logoutUser } from "../api/auth";
+import BookingFilterDownload from "../components/Bookingfilterdownload";
 import axios from "../api/axiosInstance";
+import AdminNavbar from "../components/AdminNavbar";
 
 export default function AdminDashboard() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -25,12 +27,8 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("bookings");
   const [bookings, setBookings] = useState([]);
   const [users, setUsers] = useState([]);
-  const [stats, setStats] = useState({
-    totalBookings: 0,
-    activeUsers: 0,
-    admins: 0,
-  });
   const [loading, setLoading] = useState(false);
+  const API = import.meta.env.VITE_API_URL || "http://localhost:5001/api/v1";
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -128,7 +126,11 @@ export default function AdminDashboard() {
     try {
       setLoading(true);
       const res = await axios.get("/users/all");
-      const allUsers = res.data?.data || [];
+      const allUsers =
+        res.data?.data?.users ||
+        res.data?.users ||
+        res.data?.data ||
+        [];
       const regularUsers = allUsers.filter((user) => user.role !== "admin");
       setUsers(regularUsers);
     } catch (err) {
@@ -154,7 +156,9 @@ export default function AdminDashboard() {
   // --- Cancel Booking ---
   const handleCancelBooking = async () => {
     try {
-      await axios.patch(`/booking/cancel/${selectedBookingId}`);
+      await axios.patch(`${API}/booking/cancel/${selectedBookingId}`, {}, { 
+        withCredentials: true 
+      });
       setBookings((prev) =>
         prev.map((b) =>
           b._id === selectedBookingId ? { ...b, status: "cancelled" } : b
@@ -211,80 +215,14 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-24">
-      <nav className="fixed top-0 left-0 w-full bg-transparent z-50">
-        <div className="max-w-6xl mx-auto px-6 py-3">
-          <div className="bg-linear-to-r from-[rgba(120,2,24,0.6)] to-[rgba(154,3,30,0.5)] backdrop-blur-md rounded-full shadow-md flex justify-between items-center px-6 py-3 text-white">
-            <Link to="/" className="text-2xl font-bold hover:opacity-90 transition-opacity">
-              Booking
-            </Link>
-
-            <ul className="hidden md:flex space-x-6 font-medium">
-              <li>
-                <button
-                  onClick={() => setActiveTab("bookings")}
-                  className={`hover:text-gray-200 ${activeTab === "bookings" ? "underline font-semibold" : ""}`}
-                >
-                  Bookings
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => setActiveTab("users")}
-                  className={`hover:text-gray-200 ${activeTab === "users" ? "underline font-semibold" : ""}`}
-                >
-                  Users
-                </button>
-              </li>
-            </ul>
-
-            <div className="flex items-center gap-3">
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-full transition"
-                >
-                  <User className="w-5 h-5" />
-                  <span className="hidden sm:inline">Admin</span>
-                </button>
-
-                {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-xl shadow-lg p-2">
-                    <button
-                      className="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-100 rounded-lg"
-                      onClick={handleLogout}
-                    >
-                      Logout
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="md:hidden bg-white/10 hover:bg-white/20 p-2 rounded-full transition"
-              >
-                {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-              </button>
-            </div>
-          </div>
-
-          {menuOpen && (
-            <div className="md:hidden mt-3 bg-[rgba(154,3,30,0.3)] backdrop-blur-md rounded-2xl text-white shadow-lg py-4 space-y-3 text-center">
-              <button onClick={() => { setActiveTab("bookings"); setMenuOpen(false); }} className="block w-full hover:text-gray-200 py-2">
-                Bookings
-              </button>
-              <button onClick={() => { setActiveTab("users"); setMenuOpen(false); }} className="block w-full hover:text-gray-200 py-2">
-                Users
-              </button>
-            </div>
-          )}
-        </div>
-      </nav>
+      <AdminNavbar activeTab={activeTab} setActiveTab={setActiveTab} />
 
       <div className="p-8 max-w-7xl mx-auto">
+        
         {activeTab === "bookings" && (
           <section>
-            <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+            <BookingFilterDownload />
+            <h2 className="text-2xl font-semibold text-gray-800 mt-6 mb-6 flex items-center gap-2">
               <Calendar className="w-6 h-6 text-[#9a031e]" />
               All Bookings ({bookings.length})
             </h2>
@@ -301,69 +239,84 @@ export default function AdminDashboard() {
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead className="bg-gray-100 border-b-2 border-gray-200">
-                        <tr>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">User Name</th>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Venue Name</th>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Date</th>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Time Slot</th>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Status</th>
-                          <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">Action</th>
-                        </tr>
+                      <tr className="bg-[#f3e8eb] text-[#7a1c2e]">
+                        <th className="px-6 py-4 text-left text-sm font-semibold">Date</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold">User</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold">Venue</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold">Time</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold">Status</th>
+                        <th className="px-6 py-4 text-center text-sm font-semibold">Action</th>
+                      </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
-                        {bookings.map((booking) => {
-                          const bookingStatus = getBookingStatus(booking);
-                          return (
-                            <tr key={booking._id} className="hover:bg-gray-50 transition">
-                              <td className="px-6 py-4 text-sm text-gray-800 font-medium">
-                                {booking.userId?.name || booking.user?.name || 'N/A'}
-                              </td>
-                              <td className="px-6 py-4 text-sm font-medium text-gray-800">
-                                {booking.venueId?.name || booking.venue?.name || booking.venueName || 'N/A'}
-                              </td>
-                              <td className="px-6 py-4 text-sm text-gray-600">
-                                {formatDate(booking.date)}
-                              </td>
-                              <td className="px-6 py-4 text-sm text-gray-600">
-                                {booking.startTime && booking.endTime
-                                  ? `${booking.startTime} - ${booking.endTime}`
-                                  : booking.timeSlot || 'N/A'}
-                              </td>
-                              <td className="px-6 py-4 text-sm">
-                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                  booking.status === 'confirmed' || booking.status === 'active'
-                                    ? 'bg-green-100 text-green-800'
-                                    : booking.status === 'cancelled'
-                                    ? 'bg-red-100 text-red-800'
-                                    : 'bg-yellow-100 text-yellow-800'
-                                }`}>
-                                  {booking.status || 'Pending'}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 text-center">
-                                {bookingStatus === "cancelled" ? (
-                                  <span className="text-red-600 text-sm font-medium italic">Cancelled</span>
-                                ) : bookingStatus === "upcoming" ? (
-                                  <button
-                                    className="inline-flex items-center gap-1 text-red-600 hover:text-white hover:bg-red-600 px-3 py-2 rounded-lg transition font-medium text-sm"
-                                    onClick={() => {
-                                      setSelectedBookingId(booking._id);
-                                      setShowCancelModal(true);
-                                    }}
-                                  >
-                                    <XCircle className="w-4 h-4" />
-                                    Cancel
-                                  </button>
-                                ) : bookingStatus === "in-progress" ? (
-                                  <span className="text-blue-600 text-sm font-medium italic">In Progress</span>
-                                ) : (
-                                  <span className="text-green-600 text-sm font-medium italic">Done</span>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
+  {bookings.map((booking) => {
+    const bookingStatus = getBookingStatus(booking);
+
+    return (
+      <tr key={booking._id} className="hover:bg-gray-50 transition">
+
+        {/* DATE */}
+        <td className="px-6 py-4 text-sm text-gray-700">
+          {formatDate(booking.date)}
+        </td>
+
+        {/* USER */}
+        <td className="px-6 py-4 text-sm font-medium text-gray-800">
+          {booking.userId?.name || booking.user?.name || 'N/A'}
+        </td>
+
+        {/* VENUE */}
+        <td className="px-6 py-4 text-sm text-gray-700">
+          {booking.venueId?.name || booking.venue?.name || booking.venueName || 'N/A'}
+        </td>
+
+        {/* TIME */}
+        <td className="px-6 py-4 text-sm text-gray-600">
+          {booking.startTime && booking.endTime
+            ? `${booking.startTime} - ${booking.endTime}`
+            : booking.timeSlot || 'N/A'}
+        </td>
+
+        {/* STATUS */}
+        <td className="px-6 py-4 text-sm">
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-semibold ${
+              booking.status === 'confirmed' || booking.status === 'active'
+                ? 'bg-green-100 text-green-700'
+                : booking.status === 'cancelled'
+                ? 'bg-red-100 text-red-700'
+                : 'bg-yellow-100 text-yellow-700'
+            }`}
+          >
+            {booking.status || 'Pending'}
+          </span>
+        </td>
+
+        {/* ACTION */}
+        <td className="px-6 py-4 text-center">
+          {bookingStatus === "cancelled" ? (
+            <span className="text-red-600 text-sm italic">Cancelled</span>
+          ) : bookingStatus === "upcoming" ? (
+            <button
+              className="text-red-600 hover:bg-red-600 hover:text-white px-3 py-1 rounded-lg transition text-sm"
+              onClick={() => {
+                setSelectedBookingId(booking._id);
+                setShowCancelModal(true);
+              }}
+            >
+              Cancel
+            </button>
+          ) : bookingStatus === "in-progress" ? (
+            <span className="text-blue-600 text-sm italic">In Progress</span>
+          ) : (
+            <span className="text-green-600 text-sm italic">Done</span>
+          )}
+        </td>
+
+      </tr>
+    );
+  })}
+</tbody>
                     </table>
                   </div>
                 )}
