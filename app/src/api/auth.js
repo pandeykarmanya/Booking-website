@@ -32,8 +32,24 @@ const logoutUser = async () => {
   return response.data;
 };
 
+const forgotPassword = (email) => {
+  return axios.post(
+    `${API}/api/v1/auth/forgot-password`,
+    { email }
+  );
+};
+
+const resetPassword = (data) => {
+  return axios.post(
+    `${API}/api/v1/auth/reset-password`,
+    data
+  );
+};
+
 export { 
     registerUser, 
     loginUser, 
-    logoutUser 
+    logoutUser,
+    forgotPassword,
+    resetPassword
 };
