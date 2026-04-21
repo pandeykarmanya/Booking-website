@@ -41,7 +41,7 @@ function ResetPassword() {
       setMessage(res.data.message);
 
       setTimeout(() => {
-        navigate("/login");
+        navigate("/");
       }, 1500);
     } catch (err) {
       setMessage(err.response?.data?.message || "Error resetting password");

@@ -1,6 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { User, Menu, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "../api/axiosInstance";
 import { logoutUser } from "../api/auth";
 import AdminNavbar from "../components/AdminNavbar";
@@ -12,21 +11,10 @@ export default function AddVenue() {
   const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("bookings"); 
-  const dropdownRef = useRef(null);
+  const [deletingId, setDeletingId] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    function handleClickOutside(e) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setDropdownOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const fetchVenues = async () => {
     try {
@@ -61,6 +49,26 @@ export default function AddVenue() {
       setError(err.response?.data?.message || "Error adding venue");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this venue?");
+    if (!confirmDelete) return;
+
+    try {
+      setDeletingId(id);
+      setError("");
+
+      await axios.delete(`/venues/${id}`);
+
+      setVenues((prev) => prev.filter((v) => v._id !== id));
+      setSuccess("Venue deleted successfully");
+    } catch (err) {
+      console.error("Delete error:", err);
+      setError(err.response?.data?.message || "Failed to delete venue");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -142,15 +150,25 @@ export default function AddVenue() {
               {venues.map((venue, index) => (
                 <div
                   key={venue._id || index}
-                  className="flex items-center gap-4 border border-gray-100 rounded-xl px-5 py-4 hover:shadow-sm transition"
+                  className="flex items-center justify-between gap-4 border border-gray-100 rounded-xl px-5 py-4 hover:shadow-sm transition"
                 >
-                  <div className="w-10 h-10 rounded-full bg-[#f3e8eb] flex items-center justify-center text-[#9a031e] font-bold text-sm flex-shrink-0">
-                    {venue.name?.charAt(0).toUpperCase()}
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-[#f3e8eb] flex items-center justify-center text-[#9a031e] font-bold text-sm flex-shrink-0">
+                      {venue.name?.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">{venue.name}</p>
+                      <p className="text-xs text-gray-400">Venue</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">{venue.name}</p>
-                    <p className="text-xs text-gray-400">Venue</p>
-                  </div>
+
+                  <button
+                    onClick={() => handleDelete(venue._id)}
+                    disabled={deletingId === venue._id}
+                    className="text-xs px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-400"
+                  >
+                    {deletingId === venue._id ? "Deleting..." : "Delete"}
+                  </button>
                 </div>
               ))}
             </div>
