@@ -3,6 +3,17 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";      
 import { ApiResponse } from "../utils/ApiResponse.js"; 
 
+const normalizeVenueStatus = (status) => {
+  const statusMap = {
+    active: "available",
+    available: "available",
+    maintenance: "under_maintenance",
+    under_maintenance: "under_maintenance",
+  };
+
+  return statusMap[status];
+};
+
 // Add Venue
 const addVenue = async (req, res) => {
   try {
@@ -53,16 +64,30 @@ const deleteVenue = async (req, res) => {
   }
 };
 
-// Update Venue Status (active / maintenance)
+// Update Venue Status (available / under_maintenance)
 const updateVenueStatus = asyncHandler(async (req, res) => {
   const { venueId } = req.params;
-  const { status } = req.body;
+  const { status, statusReason = "", expectedAvailableDate } = req.body;
+  const normalizedStatus = normalizeVenueStatus(status);
 
-  if (!['active', 'maintenance'].includes(status)) {
+  if (!normalizedStatus) {
     throw new ApiError(400, "Invalid status");
   }
 
-  const venue = await Venue.findByIdAndUpdate(venueId, { status }, { new: true });
+  const update = {
+    status: normalizedStatus,
+    statusUpdatedAt: new Date(),
+    statusReason: normalizedStatus === "under_maintenance" ? statusReason.trim() : "",
+    expectedAvailableDate:
+      normalizedStatus === "under_maintenance" && expectedAvailableDate
+        ? expectedAvailableDate
+        : null,
+  };
+
+  const venue = await Venue.findByIdAndUpdate(venueId, update, {
+    new: true,
+    runValidators: true,
+  });
   if (!venue) throw new ApiError(404, "Venue not found");
 
   return res.status(200).json(
