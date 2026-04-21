@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { checkAvailability } from "../api/bookingApi";
 import axios from "../api/axiosInstance";
-import CollegeHeader from "../components/CollegeHeader";
+import Navbar from "../components/Navbar";
 
 function BookingPage() {
   const navigate = useNavigate();
@@ -165,8 +165,7 @@ function BookingPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <CollegeHeader logoSrc="/public/images/its-logo.png" />
-
+      <Navbar />
       <div className="min-h-screen bg-gray-50 pt-28 px-6 relative">
         {/* Booking Form */}
         <div
@@ -295,7 +294,7 @@ function BookingPage() {
                     return (
                       <div
                         key={`${booking._id}-${idx}`}
-                        className="flex-shrink-0 rounded-xl border px-5 py-3.5 cursor-default select-none"
+                        className="shrink-0 rounded-xl border px-5 py-3.5 cursor-default select-none"
                         style={{
                           minWidth: "220px",
                           background: colors.bg,
@@ -326,7 +325,7 @@ function BookingPage() {
                             className="flex items-center gap-1.5 text-xs text-gray-500 truncate"
                             style={{ maxWidth: "120px" }}
                           >
-                            <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                                 d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
@@ -335,7 +334,7 @@ function BookingPage() {
                             </span>
                           </div>
                           <span
-                            className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
+                            className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full shrink-0"
                             style={{ background: colors.dot + "22", color: colors.text }}
                           >
                             <span
