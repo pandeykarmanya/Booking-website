@@ -8,7 +8,8 @@ import {
   Users,
   Calendar,
   Clock,
-  CheckCircle
+  CheckCircle,
+  Wrench
 } from "lucide-react";
 
 function AvailableVenues() {
@@ -21,13 +22,9 @@ function AvailableVenues() {
 
   const { availableVenues = [], allVenues = [], bookingDetails = {} } = location.state || {};
 
-  // ✅ Set of available venue IDs for quick lookup
   const availableIds = new Set(availableVenues.map((v) => v._id || v.id));
-
-  // Use allVenues if available, otherwise fall back to availableVenues
   const venuesToShow = allVenues.length > 0 ? allVenues : availableVenues;
 
-  // 🔐 Safety: redirect if page opened directly
   useEffect(() => {
     if (!location.state && !successMessage) {
       navigate("/booking", { replace: true });
@@ -44,16 +41,12 @@ function AvailableVenues() {
         venue: venue._id || venue.id,
         date: bookingDetails.date,
         startTime: bookingDetails.startTime,
-        endTime: bookingDetails.endTime
+        endTime: bookingDetails.endTime,
       });
 
       setSuccessMessage("🎉 Booking completed successfully!");
       setRedirecting(true);
-
-      setTimeout(() => {
-        navigate("/user");
-      }, 3000);
-
+      setTimeout(() => navigate("/user"), 3000);
     } catch (error) {
       setSuccessMessage("❌ Booking failed. Please try again.");
     } finally {
@@ -65,7 +58,7 @@ function AvailableVenues() {
     <div className="min-h-screen bg-gray-50 pt-28 px-6">
       <div className="max-w-4xl mx-auto">
 
-        {/* 🔙 Back */}
+        {/* Back */}
         <button
           onClick={() => navigate("/booking")}
           className="flex items-center gap-2 text-[#7a1c2e] mb-6"
@@ -74,22 +67,20 @@ function AvailableVenues() {
           Back to Search
         </button>
 
-        {/* ✅ SUCCESS MESSAGE */}
+        {/* Success Message */}
         {successMessage && (
           <div className="mb-6 flex items-center gap-3 bg-green-50 border border-green-300 text-green-800 px-5 py-4 rounded-xl font-semibold">
             <CheckCircle className="w-5 h-5" />
             <div>
               <p>{successMessage}</p>
               {redirecting && (
-                <p className="text-sm mt-1 text-green-700">
-                  Redirecting to dashboard...
-                </p>
+                <p className="text-sm mt-1 text-green-700">Redirecting to dashboard...</p>
               )}
             </div>
           </div>
         )}
 
-        {/* 📋 BOOKING DETAILS */}
+        {/* Booking Details */}
         <div className="bg-white p-6 rounded-xl shadow mb-6">
           <h2 className="text-xl font-bold mb-4">Booking Details</h2>
           <div className="grid md:grid-cols-3 gap-4">
@@ -105,7 +96,7 @@ function AvailableVenues() {
           </div>
         </div>
 
-        {/* 🏛️ ALL VENUES */}
+        {/* All Venues */}
         <div className="bg-white p-6 rounded-xl shadow">
           <h2 className="text-xl font-bold mb-4">
             All Venues &nbsp;
@@ -119,28 +110,57 @@ function AvailableVenues() {
 
           <div className="grid md:grid-cols-2 gap-6">
             {venuesToShow.map((venue) => {
-              const isAvailable = allVenues.length > 0
-                ? availableIds.has(venue._id || venue.id)
-                : true; // if no allVenues, all shown are available
+              const isMaintenance = venue.status === "maintenance"; 
+              const isAvailable = !isMaintenance && (
+                allVenues.length > 0 ? availableIds.has(venue._id || venue.id) : true
+              );
+
+              const buttonLabel = isMaintenance
+                ? "Under Maintenance"
+                : !isAvailable
+                ? "Already Booked"
+                : isBooking
+                ? "Booking..."
+                : "Book Venue";
 
               return (
                 <div
                   key={venue._id || venue.id}
                   className={`border p-5 rounded-xl transition ${
-                    isAvailable ? "" : "opacity-50 bg-gray-50"
+                    isMaintenance
+                      ? "opacity-60 bg-orange-50 border-orange-200"  // ✅ maintenance style
+                      : !isAvailable
+                      ? "opacity-50 bg-gray-50"
+                      : ""
                   }`}
                 >
                   {/* Name + Badge */}
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-bold text-lg">{venue.name}</h3>
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                      isAvailable
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                    }`}>
-                      {isAvailable ? "✓ Available" : "✗ Unavailable"}
-                    </span>
+
+                    {/* ✅ Status badge — maintenance takes priority */}
+                    {isMaintenance ? (
+                      <span className="flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium bg-orange-100 text-orange-700">
+                        <Wrench className="w-3 h-3" />
+                        Maintenance
+                      </span>
+                    ) : (
+                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                        isAvailable
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}>
+                        {isAvailable ? "✓ Available" : "✗ Unavailable"}
+                      </span>
+                    )}
                   </div>
+
+                  {/* ✅ Maintenance notice */}
+                  {isMaintenance && (
+                    <p className="text-xs text-orange-600 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2 mb-2">
+                      🔧 This venue is currently under maintenance and cannot be booked.
+                    </p>
+                  )}
 
                   <p className="text-sm text-gray-600 flex gap-2 mt-2">
                     <Users className="w-4 h-4" />
@@ -158,16 +178,14 @@ function AvailableVenues() {
                     disabled={!isAvailable || isBooking}
                     onClick={() => isAvailable && handleBook(venue)}
                     className={`w-full mt-4 py-2 rounded-lg font-semibold transition ${
-                      isAvailable
+                      isMaintenance
+                        ? "bg-orange-100 text-orange-500 cursor-not-allowed"
+                        : isAvailable
                         ? "bg-[#7a1c2e] text-white hover:bg-[#8e303f]"
                         : "bg-gray-200 text-gray-400 cursor-not-allowed"
                     }`}
                   >
-                    {!isAvailable
-                      ? "Already Booked"
-                      : isBooking
-                      ? "Booking..."
-                      : "Book Venue"}
+                    {buttonLabel}
                   </button>
                 </div>
               );
@@ -180,7 +198,6 @@ function AvailableVenues() {
   );
 }
 
-/* 🔁 Reusable detail component */
 function Detail({ icon, label, children }) {
   return (
     <div className="flex gap-3 items-center">

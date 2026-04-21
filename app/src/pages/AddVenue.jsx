@@ -11,10 +11,12 @@ export default function AddVenue() {
   const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [activeTab, setActiveTab] = useState("bookings"); 
+  const [activeTab, setActiveTab] = useState("bookings");
   const [deletingId, setDeletingId] = useState(null);
+  const [togglingId, setTogglingId] = useState(null); // ✅ track which venue is toggling
   const navigate = useNavigate();
-
+  const [location, setLocation] = useState("");
+  const [capacity, setCapacity] = useState("");
 
   const fetchVenues = async () => {
     try {
@@ -36,14 +38,15 @@ export default function AddVenue() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name.trim()) return;
-
     try {
       setLoading(true);
       setError("");
       setSuccess("");
-      await axios.post("/venues", { name });
+      await axios.post("/venues", { name, location, capacity: Number(capacity) || 0 });
       setSuccess("Venue added successfully");
       setName("");
+      setLocation("");
+      setCapacity("");
       fetchVenues();
     } catch (err) {
       setError(err.response?.data?.message || "Error adding venue");
@@ -55,38 +58,40 @@ export default function AddVenue() {
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm("Are you sure you want to delete this venue?");
     if (!confirmDelete) return;
-
     try {
       setDeletingId(id);
       setError("");
-
       await axios.delete(`/venues/${id}`);
-
       setVenues((prev) => prev.filter((v) => v._id !== id));
       setSuccess("Venue deleted successfully");
     } catch (err) {
-      console.error("Delete error:", err);
       setError(err.response?.data?.message || "Failed to delete venue");
     } finally {
       setDeletingId(null);
     }
   };
 
-  const handleLogout = async () => {
+  const handleToggleStatus = async (venue) => {
+    const newStatus = venue.status === "maintenance" ? "active" : "maintenance";
     try {
-      await logoutUser();
-      navigate("/");
+      setTogglingId(venue._id);
+      setError("");
+      await axios.patch(`/venues/${venue._id}/status`, { status: newStatus });
+      setVenues((prev) =>
+        prev.map((v) => (v._id === venue._id ? { ...v, status: newStatus } : v))
+      );
+      setSuccess(`${venue.name} marked as ${newStatus}`);
     } catch (err) {
-      console.log("Logout error:", err);
+      setError(err.response?.data?.message || "Failed to update venue status");
+    } finally {
+      setTogglingId(null);
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-
       <AdminNavbar activeTab={activeTab} />
 
-      {/* ── Content ── */}
       <div className="pt-28 px-6 pb-10 max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold text-[#9a031e] mb-8">Venue Management</h1>
 
@@ -102,6 +107,20 @@ export default function AddVenue() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#9a031e]/30 focus:border-[#9a031e] transition"
+            />
+            <input
+              type="text"
+              placeholder="Enter venue location"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#9a031e]/30 focus:border-[#9a031e] transition"
+            />
+            <input
+              type="text"
+              placeholder="Enter venue capacity"
+              value={capacity}
+              onChange={(e) => setCapacity(e.target.value)}
               className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#9a031e]/30 focus:border-[#9a031e] transition"
             />
             <button
@@ -130,10 +149,7 @@ export default function AddVenue() {
                 {venues.length} venue{venues.length !== 1 ? "s" : ""} registered
               </p>
             </div>
-            <button
-              onClick={fetchVenues}
-              className="text-sm text-[#9a031e] hover:underline"
-            >
+            <button onClick={fetchVenues} className="text-sm text-[#9a031e] hover:underline">
               Refresh
             </button>
           </div>
@@ -147,30 +163,73 @@ export default function AddVenue() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {venues.map((venue, index) => (
-                <div
-                  key={venue._id || index}
-                  className="flex items-center justify-between gap-4 border border-gray-100 rounded-xl px-5 py-4 hover:shadow-sm transition"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-[#f3e8eb] flex items-center justify-center text-[#9a031e] font-bold text-sm flex-shrink-0">
-                      {venue.name?.charAt(0).toUpperCase()}
+              {venues.map((venue, index) => {
+                const isMaintenance = venue.status === "maintenance";
+                return (
+                  <div
+                    key={venue._id || index}
+                    className={`flex flex-col gap-3 border rounded-xl px-5 py-4 hover:shadow-sm transition ${
+                      isMaintenance ? "border-orange-200 bg-orange-50/40" : "border-gray-100"
+                    }`}
+                  >
+                    {/* Top row: avatar + name */}
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-[#f3e8eb] flex items-center justify-center text-[#9a031e] font-bold text-sm shrink-0">
+                        {venue.name?.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">{venue.name}</p>
+                        {/* Status badge */}
+                        <span
+                          className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                            isMaintenance
+                              ? "bg-orange-100 text-orange-700"
+                              : "bg-green-100 text-green-700"
+                          }`}
+                        >
+                          {isMaintenance ? "🔧 Maintenance" : "✅ Active"}
+                        </span>
+                        
+                        <p className="text-xs text-gray-500 mt-1">
+                          📍 {venue.location || "No location"}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          👥 Capacity: {venue.capacity || "N/A"}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-800">{venue.name}</p>
-                      <p className="text-xs text-gray-400">Venue</p>
+
+                    {/* Bottom row: toggle + delete */}
+                    <div className="flex gap-2">
+                      {/* Maintenance toggle */}
+                      <button
+                        onClick={() => handleToggleStatus(venue)}
+                        disabled={togglingId === venue._id}
+                        className={`flex-1 text-xs px-3 py-1.5 rounded-lg font-medium transition disabled:opacity-60 ${
+                          isMaintenance
+                            ? "bg-green-100 text-green-700 hover:bg-green-200"
+                            : "bg-orange-100 text-orange-700 hover:bg-orange-200"
+                        }`}
+                      >
+                        {togglingId === venue._id
+                          ? "Updating..."
+                          : isMaintenance
+                          ? "Mark Active"
+                          : "Maintenance"}
+                      </button>
+
+                      {/* Delete */}
+                      <button
+                        onClick={() => handleDelete(venue._id)}
+                        disabled={deletingId === venue._id}
+                        className="text-xs px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-400 transition"
+                      >
+                        {deletingId === venue._id ? "..." : "Delete"}
+                      </button>
                     </div>
                   </div>
-
-                  <button
-                    onClick={() => handleDelete(venue._id)}
-                    disabled={deletingId === venue._id}
-                    className="text-xs px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-400"
-                  >
-                    {deletingId === venue._id ? "Deleting..." : "Delete"}
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
