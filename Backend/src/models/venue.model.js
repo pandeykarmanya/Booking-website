@@ -10,6 +10,14 @@ const venueSchema = new mongoose.Schema({
         enum: ['available', 'under_maintenance'],
         default: 'available'
     },
+    location: {
+        type: String,
+        default: ""
+    },
+    capacity: {
+        type: Number,
+    default: 0
+    },
     statusReason: {
         type: String,
         default: ''
