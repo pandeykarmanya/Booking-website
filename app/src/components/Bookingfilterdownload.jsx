@@ -1,7 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
-
-const API = import.meta.env.VITE_API_URL || "http://localhost:5001/api/v1";
+import axios from "../api/axiosInstance";
 
 // ── helpers ──────────────────────────────────
 const today = () => new Date().toISOString().split("T")[0];
@@ -44,11 +42,8 @@ const BookingFilterDownload = () => {
     }
     setLoading(true);
     try {
-      const { data } = await axios.get(`${API}/admin/bookings?${buildParams()}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      // ✅ Safe fallback in handleFetch
-setBookings(data.data?.bookings || data.data || data.bookings || []);
+      const { data } = await axios.get(`/admin/bookings?${buildParams()}`);
+      setBookings(data.data?.bookings || data.data || data.bookings || []);
       setFetched(true);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to fetch bookings.");
@@ -65,14 +60,9 @@ setBookings(data.data?.bookings || data.data || data.bookings || []);
     setPdfLoading(true);
     setError("");
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(
-        `${API}/admin/bookings/download-pdf?${buildParams()}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          responseType: "blob",
-        }
-      );
+      const response = await axios.get(`/admin/bookings/download-pdf?${buildParams()}`, {
+        responseType: "blob",
+      });
       const url  = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href  = url;
