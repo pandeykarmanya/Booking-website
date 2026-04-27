@@ -29,7 +29,12 @@ function BookingPage() {
     const fetchAllVenues = async () => {
       try {
         const res = await axios.get("/venues");
-        setAllVenues(res.data?.venues || []);
+        setAllVenues(
+          res.data?.data?.venues ||
+          res.data?.venues ||
+          res.data?.data ||
+          []
+        );
       } catch (err) {
         console.error("Failed to fetch venues", err);
       }
@@ -150,7 +155,7 @@ function BookingPage() {
   };
 
   const getStatusColor = (status) => {
-    if (status === "confirmed" || status === "active")
+    if (status === "confirmed" || status === "available")
       return { bg: "#dcfce7", text: "#166534", dot: "#22c55e" };
     if (status === "pending")
       return { bg: "#fef9c3", text: "#854d0e", dot: "#eab308" };

@@ -28,7 +28,6 @@ export default function AdminDashboard() {
   const [bookings, setBookings] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
-  const API = import.meta.env.VITE_API_URL || "http://localhost:5001/api/v1";
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -156,9 +155,7 @@ export default function AdminDashboard() {
   // --- Cancel Booking ---
   const handleCancelBooking = async () => {
     try {
-      await axios.patch(`${API}/booking/cancel/${selectedBookingId}`, {}, { 
-        withCredentials: true 
-      });
+      await axios.patch(`/booking/cancel/${selectedBookingId}`);
       setBookings((prev) =>
         prev.map((b) =>
           b._id === selectedBookingId ? { ...b, status: "cancelled" } : b

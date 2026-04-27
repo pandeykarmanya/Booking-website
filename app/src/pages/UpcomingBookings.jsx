@@ -1,14 +1,10 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import axios from "../api/axiosInstance";
 import AdminNavbar from "../components/AdminNavbar";
 
-const API_BASE = "http://localhost:5001/api/v1";
-
 const bookingApi = {
-  getUpcomingBookings: () =>
-    axios.get(`${API_BASE}/booking/upcoming`, { withCredentials: true }),
-  getAllBookings: () =>
-    axios.get(`${API_BASE}/booking/all`, { withCredentials: true }),
+  getUpcomingBookings: () => axios.get("/booking/upcoming"),
+  getAllBookings: () => axios.get("/booking/all"),
 };
 
 const statusStyles = {

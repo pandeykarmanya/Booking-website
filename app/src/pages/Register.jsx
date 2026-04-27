@@ -5,7 +5,7 @@ import Button from "../components/Button";
 import { registerUser } from "../api/auth";
 import CollegeHeader from "../components/CollegeHeader";
 import Footer from "../components/Footer";
-import axios from "axios";
+import axios from "../api/axiosInstance";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -40,8 +40,8 @@ export default function Register() {
     if (otp.length !== 6) { setOtpError("Enter valid 6-digit OTP"); return; }
     setOtpError(""); setOtpLoading(true);
     try {
-      await axios.post("http://localhost:5001/api/v1/auth/verify-otp", { email: form.email, otp });
-      await axios.post("http://localhost:5001/api/v1/auth/login", { email: form.email, password: form.password }, { withCredentials: true });
+      await axios.post("/auth/verify-otp", { email: form.email, otp });
+      await axios.post("/auth/login", { email: form.email, password: form.password });
       setShowOTPModal(false); navigate("/user");
     } catch (err) {
       setOtpError(err.response?.data?.message || "Invalid OTP");

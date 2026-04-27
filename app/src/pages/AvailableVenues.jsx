@@ -16,7 +16,7 @@ function AvailableVenues() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [isBooking, setIsBooking] = useState(false);
+  const [bookingVenueId, setBookingVenueId] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [redirecting, setRedirecting] = useState(false);
 
@@ -32,13 +32,14 @@ function AvailableVenues() {
   }, [location.state, navigate, successMessage]);
 
   const handleBook = async (venue) => {
-    setIsBooking(true);
+    const venueId = venue._id || venue.id;
+    setBookingVenueId(venueId);
     setSuccessMessage("");
     setRedirecting(false);
 
     try {
       await createBooking({
-        venue: venue._id || venue.id,
+        venue: venueId,
         date: bookingDetails.date,
         startTime: bookingDetails.startTime,
         endTime: bookingDetails.endTime,
@@ -50,7 +51,7 @@ function AvailableVenues() {
     } catch (error) {
       setSuccessMessage("❌ Booking failed. Please try again.");
     } finally {
-      setIsBooking(false);
+      setBookingVenueId(null);
     }
   };
 
@@ -110,16 +111,18 @@ function AvailableVenues() {
 
           <div className="grid md:grid-cols-2 gap-6">
             {venuesToShow.map((venue) => {
+              const venueId = venue._id || venue.id;
               const isMaintenance = venue.status === "under_maintenance"; 
+              const isCurrentBooking = bookingVenueId === venueId;
               const isAvailable = !isMaintenance && (
-                allVenues.length > 0 ? availableIds.has(venue._id || venue.id) : true
+                allVenues.length > 0 ? availableIds.has(venueId) : true
               );
 
               const buttonLabel = isMaintenance
                 ? "Under Maintenance"
                 : !isAvailable
                 ? "Already Booked"
-                : isBooking
+                : isCurrentBooking
                 ? "Booking..."
                 : "Book Venue";
 
@@ -175,11 +178,13 @@ function AvailableVenues() {
                   )}
 
                   <button
-                    disabled={!isAvailable || isBooking}
+                    disabled={!isAvailable || bookingVenueId !== null}
                     onClick={() => isAvailable && handleBook(venue)}
                     className={`w-full mt-4 py-2 rounded-lg font-semibold transition ${
                       isMaintenance
                         ? "bg-orange-100 text-orange-500 cursor-not-allowed"
+                        : isCurrentBooking
+                        ? "bg-[#8e303f] text-white cursor-wait"
                         : isAvailable
                         ? "bg-[#7a1c2e] text-white hover:bg-[#8e303f]"
                         : "bg-gray-200 text-gray-400 cursor-not-allowed"

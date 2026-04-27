@@ -22,7 +22,12 @@ export default function AddVenue() {
     try {
       setFetchLoading(true);
       const res = await axios.get("/venues");
-      const data = res.data?.data || res.data?.venues || res.data || [];
+      const data =
+        res.data?.data?.venues ||
+        res.data?.venues ||
+        res.data?.data ||
+        res.data ||
+        [];
       setVenues(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Error fetching venues:", err);
