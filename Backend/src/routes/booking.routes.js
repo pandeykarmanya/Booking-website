@@ -11,12 +11,17 @@ import {
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { adminMiddleware } from "../middlewares/admin.middleware.js";
+import { validateRequest } from "../middlewares/validation.middleware.js";
+import {
+    validateAvailabilityQuery,
+    validateCreateBooking,
+} from "../validators/booking.validators.js";
 
 const router = express.Router();
 
 // USER ROUTES
-router.get("/check-availability", authMiddleware, getAvailableVenues); 
-router.post("/create", authMiddleware, createBooking);
+router.get("/check-availability", authMiddleware, validateRequest(validateAvailabilityQuery), getAvailableVenues); 
+router.post("/create", authMiddleware, validateRequest(validateCreateBooking), createBooking);
 router.get("/my-bookings", authMiddleware, getMyBookings);
 router.patch("/cancel/:bookingId", authMiddleware, cancelBooking); 
 router.delete("/delete/:bookingId", authMiddleware, cancelBooking);
