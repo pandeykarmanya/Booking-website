@@ -1,49 +1,25 @@
-import axios from "axios";
-
-const API = "http://localhost:5001";
+import axios from "./axiosInstance";
 
 const registerUser = (data) => {
-  return axios.post(
-    `${API}/api/v1/auth/register`,
-    data,
-    { withCredentials: true }
-  );
+  return axios.post("/auth/register", data);
 };
 
 const loginUser = (data) => {
-  return axios.post(
-    `${API}/api/v1/auth/login`,
-    data,
-    {
-      withCredentials: true, 
-    }
-  );
+  return axios.post("/auth/login", data);
 };
 
 const logoutUser = async () => {
-  const response = await axios.post(
-    `${API}/api/v1/auth/logout`,
-    {},
-    {
-      withCredentials: true, 
-    }
-  );
+  const response = await axios.post("/auth/logout", {});
 
   return response.data;
 };
 
 const forgotPassword = (email) => {
-  return axios.post(
-    `${API}/api/v1/auth/forgot-password`,
-    { email }
-  );
+  return axios.post("/auth/forgot-password", { email });
 };
 
 const resetPassword = (data) => {
-  return axios.post(
-    `${API}/api/v1/auth/reset-password`,
-    data
-  );
+  return axios.post("/auth/reset-password", data);
 };
 
 export { 

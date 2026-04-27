@@ -1,11 +1,9 @@
-// src/api/axiosInstance.js
-
 import axios from "axios";
+import { API_BASE_URL } from "../config";
 
 const instance = axios.create({
-  baseURL: "http://localhost:5001/api/v1",  // your backend base URL
-
-  withCredentials: true, // important for JWT cookie
+  baseURL: API_BASE_URL,
+  withCredentials: true,
 });
 
 export default instance;
