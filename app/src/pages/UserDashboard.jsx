@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { TrendingUp, Ticket, X, Clock } from "lucide-react";
 import Navbar from "../components/Navbar";
-import CollegeHeader from "../components/CollegeHeader";
+import axios from "../api/axiosInstance";
 
 export default function UserDashboard() {
   const [activeTab, setActiveTab] = useState("upcoming");
@@ -17,10 +17,7 @@ export default function UserDashboard() {
   const handleCancelBooking = async () => {
     setCancelError("");
     try {
-      await fetch(`http://localhost:5001/api/v1/booking/cancel/${selectedBookingId}`, {
-        method: "PATCH",
-        credentials: "include",
-      });
+      await axios.patch(`/booking/cancel/${selectedBookingId}`);
       setUpcomingBookings((prev) =>
         prev.map((b) =>
           b._id === selectedBookingId ? { ...b, status: "cancelled" } : b
@@ -28,7 +25,7 @@ export default function UserDashboard() {
       );
       setShowCancelModal(false);
     } catch (err) {
-      setCancelError("Failed to cancel booking. Try again.");
+      setCancelError(err.response?.data?.message || "Failed to cancel booking. Try again.");
     }
   };
 
@@ -40,11 +37,8 @@ export default function UserDashboard() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await fetch("http://localhost:5001/api/v1/user/me", {
-          credentials: "include",
-        });
-        const data = await res.json();
-        if (data.success && data.data) setUser(data.data);
+        const res = await axios.get("/user/me");
+        if (res.data?.success && res.data?.data) setUser(res.data.data);
       } catch (err) {
         console.error("User fetch error:", err);
       }
@@ -55,15 +49,11 @@ export default function UserDashboard() {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const res = await fetch(
-          "http://localhost:5001/api/v1/booking/my-bookings",
-          { credentials: "include" }
-        );
-        const data = await res.json();
-        if (data.success && data.data) {
-          setUpcomingBookings(data.data.upcoming || []);
-          setOngoingBookings(data.data.ongoing || []);
-          setPastBookings(data.data.past || []);
+        const res = await axios.get("/booking/my-bookings");
+        if (res.data?.success && res.data?.data) {
+          setUpcomingBookings(res.data.data.upcoming || []);
+          setOngoingBookings(res.data.data.ongoing || []);
+          setPastBookings(res.data.data.past || []);
         }
       } catch (err) {
         console.error("Booking fetch error:", err);
