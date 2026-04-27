@@ -15,54 +15,47 @@ const normalizeVenueStatus = (status) => {
 };
 
 // Add Venue
-const addVenue = async (req, res) => {
-  try {
-    const { name, location, capacity } = req.body; 
+const addVenue = asyncHandler(async (req, res) => {
+  const { name, location, capacity } = req.body;
 
-    if (!name || !name.trim()) {
-      return res.status(400).json({ success: false, message: "Venue name is required" });
-    }
-
-    const existing = await Venue.findOne({ name: name.trim() });
-    if (existing) {
-      return res.status(400).json({ success: false, message: "Venue already exists" });
-    }
-
-    const venue = await Venue.create({ 
-      name: name.trim(),
-      location: location?.trim() || "" ,
-      capacity: capacity ? Number(capacity) : 0
-    });
-
-    res.status(201).json({ success: true, message: "Venue added successfully", venue });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+  const existing = await Venue.findOne({ name: name.trim() });
+  if (existing) {
+    throw new ApiError(400, "Venue already exists");
   }
-};
+
+  const venue = await Venue.create({
+    name: name.trim(),
+    location: location?.trim() || "",
+    capacity: capacity ? Number(capacity) : 0,
+  });
+
+  return res.status(201).json(
+    new ApiResponse(201, venue, "Venue added successfully")
+  );
+});
 
 // Get All Venues
-const getVenues = async (req, res) => {
-  try {
-    const venues = await Venue.find().sort({ createdAt: -1 });
-    res.status(200).json({ success: true, count: venues.length, venues });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
+const getVenues = asyncHandler(async (req, res) => {
+  const venues = await Venue.find().sort({ createdAt: -1 });
+
+  return res.status(200).json(
+    new ApiResponse(200, { venues, count: venues.length }, "Venues fetched successfully")
+  );
+});
 
 // Delete Venue
-const deleteVenue = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const venue = await Venue.findByIdAndDelete(id);
-    if (!venue) {
-      return res.status(404).json({ success: false, message: "Venue not found" });
-    }
-    res.status(200).json({ success: true, message: "Venue deleted successfully", venue });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+const deleteVenue = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const venue = await Venue.findByIdAndDelete(id);
+
+  if (!venue) {
+    throw new ApiError(404, "Venue not found");
   }
-};
+
+  return res.status(200).json(
+    new ApiResponse(200, venue, "Venue deleted successfully")
+  );
+});
 
 // Update Venue Status (available / under_maintenance)
 const updateVenueStatus = asyncHandler(async (req, res) => {

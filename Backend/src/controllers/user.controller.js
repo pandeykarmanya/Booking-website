@@ -62,11 +62,6 @@ const changePassword = asyncHandler(async (req, res) => {
    Make User Admin 
 -------------------------------------------------------------------*/
 const makeAdmin = asyncHandler(async (req, res) => {
-  // Only admins can promote users
-  if (req.user.role !== "admin") {
-    throw new ApiError(403, "Only admins can promote users");
-  }
-
   const { userId } = req.params;
 
   if (!userId) {
@@ -100,10 +95,6 @@ const makeAdmin = asyncHandler(async (req, res) => {
    Get All Users 
 -------------------------------------------------------------------*/
 const getAllUsers = asyncHandler(async (req, res) => {
-    if (req.user.role !== "admin") {
-        throw new ApiError(403, "You are not authorized to access this resource");
-    }
-
     const page = parseInt(req.query.page) || 1;
     const limit = Math.min(parseInt(req.query.limit) || 10, 100); // Max 100 per page
     const skip = (page - 1) * limit;

@@ -7,11 +7,6 @@ import { asyncHandler } from "../utils/asyncHandler.js";
    Get Admin Requests (ADMIN ONLY)
 -------------------------------------------------------------------*/
 const getAdminRequests = asyncHandler(async (req, res) => {
-    // Authorization check
-    if (req.user.role !== "admin") {
-        throw new ApiError(403, "Only admins can view admin requests");
-    }
-
     // Pagination
     const page = parseInt(req.query.page) || 1;
     const limit = Math.min(parseInt(req.query.limit) || 10, 100);
@@ -55,11 +50,6 @@ const getAdminRequests = asyncHandler(async (req, res) => {
    Handle Admin Request 
 -------------------------------------------------------------------*/
 const handleAdminRequest = asyncHandler(async (req, res) => {
-    // Authorization check
-    if (req.user.role !== "admin") {
-        throw new ApiError(403, "Only admins can handle admin requests");
-    }
-
     const { decision } = req.body;
     const { userId } = req.params;
 

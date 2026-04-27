@@ -18,6 +18,10 @@ dayjs.extend(isSameOrBefore);
 
 const TZ = "Asia/Kolkata";
 
+const isVenueAvailableStatus = (status) => {
+    return status === "available" || status === "active" || status === undefined || status === null;
+};
+
 /*----------------------------------------------
    🧮 Helper - Convert time string to minutes
 ----------------------------------------------*/
@@ -108,7 +112,14 @@ const getAvailableVenues = asyncHandler(async (req, res) => {
         }
     });
 
-    const allVenues = await Venue.find({ status: "available" });
+    const allVenues = await Venue.find({
+        $or: [
+            { status: "available" },
+            { status: "active" },
+            { status: { $exists: false } },
+            { status: null },
+        ],
+    });
     const availableVenues = allVenues.filter(v => !unavailableVenueIds.has(v._id.toString()));
 
     return res.status(200).json(
@@ -129,7 +140,7 @@ const createBooking = asyncHandler(async (req, res) => {
 
     const venueExists = await Venue.findById(venue);
     if (!venueExists) throw new ApiError(404, "Venue not found");
-    if (venueExists.status !== "available") {
+    if (!isVenueAvailableStatus(venueExists.status)) {
         throw new ApiError(400, "This venue is currently under maintenance and cannot be booked");
     }
 
