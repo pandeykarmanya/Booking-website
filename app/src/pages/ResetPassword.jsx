@@ -13,6 +13,7 @@ function ResetPassword() {
     email: emailFromURL || "",
     otp: "",
     newPassword: "",
+    confirmPassword: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -33,11 +34,21 @@ function ResetPassword() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setMessage("");
 
+    if (form.newPassword !== form.confirmPassword) {
+      setMessage("Passwords do not match");
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      const res = await resetPassword(form);
+      const res = await resetPassword({
+        email: form.email,
+        otp: form.otp,
+        newPassword: form.newPassword,
+      });
       setMessage(res.data.message);
 
       setTimeout(() => {
@@ -86,6 +97,17 @@ function ResetPassword() {
             name="newPassword"
             placeholder="New Password"
             className="w-full p-4 mb-4 rounded-lg bg-gray-100 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#9a031e]"
+            value={form.newPassword}
+            onChange={handleChange}
+            required
+          />
+
+          <input
+            type="password"
+            name="confirmPassword"
+            placeholder="Confirm New Password"
+            className="w-full p-4 mb-4 rounded-lg bg-gray-100 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#9a031e]"
+            value={form.confirmPassword}
             onChange={handleChange}
             required
           />
