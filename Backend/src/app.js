@@ -8,8 +8,7 @@ const app = express();
 // ✅ CORS (VERY IMPORTANT FOR COOKIES)
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:5173" || "http://booking-website.vercel.app", // allow this origin to access the server
-    credentials: true, // allow cookies
+    origin: process.env.CORS_ORIGIN || "http://pandeykarmanya-booking-website69.vercel.app", 
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   })
 );
