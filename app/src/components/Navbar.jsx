@@ -37,7 +37,7 @@ export default function Navbar() {
 
           <Link to="/">
             <img
-              src="./images/its-logo.png"
+              src="/its-logo.png"
               alt="ITS Logo"
               className="w-12 h-12 rounded-full object-contain bg-white p-1 border-2 border-white/60"
             />
