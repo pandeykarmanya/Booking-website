@@ -32,7 +32,7 @@ function ForgotPassword() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#f8f9fa] via-[#f1f3f5] to-[#e9ecef]">
 
-      <CollegeHeader logoSrc="/public/images/its-logo.png" />
+      <CollegeHeader logoSrc="/images/its-logo.png" />
 
       <div className="flex flex-1 items-center justify-center px-4">
         

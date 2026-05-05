@@ -58,7 +58,7 @@ export default function Register() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      <CollegeHeader logoSrc="/public/images/its-logo.png" />
+      <CollegeHeader logoSrc="/images/its-logo.png" />
 
       <div className="flex flex-1 items-center justify-center px-4 py-10">
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-10 w-full max-w-md">

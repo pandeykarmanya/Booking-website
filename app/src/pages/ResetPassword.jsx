@@ -84,7 +84,7 @@ function ResetPassword() {
     <div className="flex flex-col min-h-screen">
 
       <CollegeHeader
-        logoSrc="/public/images/its-logo.png"
+        logoSrc="/images/its-logo.png"
       />
 
     <div className="min-h-screen flex items-center justify-center bg-white">
