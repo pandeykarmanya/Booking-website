@@ -8,7 +8,14 @@ const app = express();
 // ✅ CORS (VERY IMPORTANT FOR COOKIES)
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:5173" || "http://pandeykarmanya-booking-website69.vercel.app", 
+    origin: [
+      process.env.CORS_ORIGIN,
+      "http://localhost:5173",
+      "http://localhost:5001",
+      "https://booking-website-omega.vercel.app",
+      "https://booking-website-git-main-karmanyapandey348-gmailcoms-projects.vercel.app",
+      "https://booking-website-p6xoslvg7-karmanyapandey348-gmailcoms-projects.vercel.app"
+    ].filter(Boolean), 
     credentials: true, 
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   })
