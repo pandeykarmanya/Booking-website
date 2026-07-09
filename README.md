@@ -2,6 +2,10 @@
 
 A full-stack venue booking platform built for institutional use. The application allows users to register, verify their account with OTP, check venue availability, create bookings, manage reservations, and lets admins manage venues, bookings, and user access from an admin dashboard.
 
+## Live Demo
+
+🔗 [venue-booking-website.vercel.app](https://venue-booking-website.vercel.app/)
+
 ## Tech Stack
 
 - Frontend: React, Vite, Tailwind CSS, React Router, Axios
